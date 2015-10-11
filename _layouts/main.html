@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  
+  {% include head.html %}
+
+  <body id='{{ page.title }}'>
+
+    {% include nav.html %}
+    
+    <div class='wrapper'>
+
+      <section>
+
+        <div id='container'>
+          {% if page.title == "Home" %}
+          {% include hero.html %}
+          {% endif %}
+          <section class="main-content">
+            {{ content }}
+            {% include footer.html %}
+          </section>
+        </div>
+
+      </section>
+
+      <script src='assets/js/scale.fix.js'></script>
+      
+    </div>
+
+  </body>
+</html>

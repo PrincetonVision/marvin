@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+   sudo apt-get install -y doxygen ruby-dev nodejs
+   sudo gem install jekyll execjs therubyracer
+elif [[ "$OSTYPE" == "darwin" ]]; then
+   sudo gem install jekyll
+fi
