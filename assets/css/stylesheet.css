@@ -1,9 +1,10 @@
 * {
-    box-sizing: border-box; }
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 body {
-    padding: 0;
-    margin: 0;
     font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 16px;
     line-height: 1.5;
@@ -62,15 +63,15 @@ a:hover {
 
 @media screen and (min-width: 64em) {
     .page-header {
-        padding: 3.5rem 6rem 5rem 6rem; } }
+        padding: 2.5rem 6rem 5rem 6rem; } }
 
 @media screen and (min-width: 42em) and (max-width: 64em) {
     .page-header {
-        padding: 1.5rem 4rem 3rem 4rem; } }
+        padding: 1rem 4rem 3rem 4rem; } }
 
 @media screen and (max-width: 42em) {
     .page-header {
-        padding: 1rem 1rem; } }
+        padding: 3rem 1rem 1rem 1rem; } }
 
 .project-name {
     margin-top: 0;
@@ -245,16 +246,17 @@ a:hover {
     .site-footer {
         font-size: 0.9rem; } }
 
-@media screen and (min-width: 42em) {
+marvin {
+    position: absolute;
+    background: url('/assets/img/marvin.svg');
+}
+@media screen and (min-width: 42em) and (max-width: 64em) {
     marvin {
-        position: absolute;
-        background: url('/assets/img/marvin.svg');
-        background-size: 100px 100px;
+        background-size: 8rem 8rem;
         bottom: 0;
-        right: 10px;
-        width: 100px;
-        height: 100px;
-        margin-top: 10px;
+        right: 1rem;
+        width: 8rem;
+        height: 8rem;
     }
 }
 
@@ -272,13 +274,25 @@ a:hover {
 
 nav {
     background: #ee7f2d;
-    overflow: auto;
     position: relative;
+}
+
+nav #menu {
+    display: hidden;
+    width: 40px;
+    height: 40px;
+    background: #4C8FEC url("/assets/img/menu-icon.png") center;
+}
+
+nav ul {
+    list-style: none;
 }
 
 nav ul li {
     display: inline;
-    padding: 0.75rem;
+    padding-left: 2rem;
+    overflow: hidden;
+    line-height: 4rem;
     overflow: hidden;
     font-weight: 550;
 }
@@ -294,4 +308,74 @@ nav ul li a:hover {
 
 .nav-marvin {
     font-weight: bold;
+}
+
+@media screen and (max-width: 42em) {
+
+    marvin {
+        position: fixed;
+        transform: rotate(180deg);
+        z-index: 999;
+        background-size: 4rem 4rem;
+        width: 4rem;
+        height: 4rem;
+        left: 1rem;
+        top: 0;
+    }
+
+    nav {
+        display: none;
+    }
+
+/*    nav {
+        display: block;
+        text-align: center;
+        z-index: 999;
+    }
+
+    #menu {
+        display: inline-block;
+        float: right;
+    }
+
+    nav ul, nav:active ul { 
+
+        display: none;
+        position: absolute;
+        padding: 20px;
+        background: #fff;
+        border: 5px solid #444;
+        right: 20px;
+        top: 60px;
+        width: 50%;
+        border-radius: 4px 0 4px 4px;
+
+    }
+
+    nav li {
+
+        text-align: center;
+        width: 100%;
+        padding: 10px 0;
+        margin: 0;
+
+    }
+
+    nav:hover ul {
+
+        display: block;
+
+    }*/
+
+    /*
+
+    nav ul {
+        display: inline-block;
+    }
+
+    nav ul li {
+        line-height: 4rem;
+        font-size: 0.9rem;
+        padding-left: 1rem;
+    }*/
 }
