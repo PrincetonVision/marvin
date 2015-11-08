@@ -6,7 +6,7 @@ title: About
 ## About
 
 ### Why another deep learning framework?
-Existing frameworks have a steep learning curve and are quite difficult to modify. Worse, changes one group makes to a framework is often incompatible with the main branch. Standing on the shoulders of giants requires a network of patch files.
+Existing frameworks have a steep learning curve and are quite difficult to modify. Worse, changes one group makes to a framework are often incompatible with the main branch. Standing on the shoulders of giants requires a network of patch files.
 
 Marvin is designed first and foremost to be hackable. It is naively simple for fast prototyping, uses only basic C/C++, and only calls CUDA and cuDNN as dependencies. All code lives in ```marvin.hpp``` and ```marvin.cu```.
 
