@@ -5,7 +5,7 @@ title: Home
 
 ### Marvin thinks, therefore Marvin is.
 
-Never before has it been so easy to learn so deeply. Marvin was born to be hacked, using only basic C/C++, and only depends on CUDA and cuDNN. All code lives in ```marvin.hpp``` and ```marvin.cu```. Win friends and influence people in four easy steps:
+Never before has it been so easy to learn so deeply. Marvin was born to be hacked, using only basic C/C++, and only depends on CUDA and cuDNN. All code lives in [```marvin.hpp```](https://github.com/PrincetonVision/marvin/blob/master/marvin.hpp) and [```marvin.cu```](https://github.com/PrincetonVision/marvin/blob/master/marvin.cu). Win friends and influence people in four easy steps:
 
 #### 1. Find a home for Marvin
 
@@ -26,6 +26,6 @@ mv PrincetonVision* marvin && cd marvin
 
 #### 4. Teach him MNIST digits
 
-1. Prepare data: run ```examples/mnist/prepare_mnist.m``` in ```MATLAB```
-2. Train a model: run ```examples/mnist/demo.sh``` in ```shell```
-3. Visualize filters: run ```examples/mnist/demo_vis_filter.m``` in ```MATLAB```
+1. Prepare data: run [```examples/mnist/prepare_mnist.m```](https://github.com/PrincetonVision/marvin/blob/master/examples/mnist/prepare_mnist.m) in ```MATLAB```
+2. Train a model: run [```examples/mnist/demo.sh```](https://github.com/PrincetonVision/marvin/blob/master/examples/mnist/demo.sh) in ```shell```
+3. Visualize filters: run [```examples/mnist/demo_vis_filter.m```](https://github.com/PrincetonVision/marvin/blob/master/examples/mnist/demo_vis_filter.m) in ```MATLAB```
