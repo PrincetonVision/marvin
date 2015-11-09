@@ -5,24 +5,27 @@ title: Home
 
 ### Marvin thinks, therefore Marvin is.
 
-Never before has it been so easy to learn so deeply. Marvin is designed first and foremost to be hackable. It is naively simple for fast prototyping, uses only basic C/C++, and only calls CUDA and cuDNN as dependencies. All code lives in ```marvin.hpp``` and ```marvin.cu```.
+Never before has it been so easy to learn so deeply. Marvin was born to be hacked, using only basic C/C++, and only depends on CUDA and cuDNN. All code lives in ```marvin.hpp``` and ```marvin.cu```. Win friends and influence people in four easy steps:
 
-### Get started in a jiffy.
+#### 1. Find a home for Marvin
 
-#### Compile Marvin
-First, install [CUDA 7.5](https://developer.nvidia.com/cuda-downloads) and [cuDNN 3](https://developer.nvidia.com/cudnn).
+Marvin's life depends on an NVIDIA GPU with [CUDA 7.5](http://lmgtfy.com/?q=install+cuda+7.5) and [cuDNN 3](http://lmgtfy.com/?q=install+cuDNN+3).
+
+#### 2. Grab him from the cloud
 
 {% highlight bash %}
 curl -L https://github.com/PrincetonVision/marvin/tarball/master | tar x
 mv PrincetonVision* marvin && cd marvin
 {% endhighlight %}
 
+#### 3. Bring him to life
+
 {% highlight bash %}
  ./compile.sh
  {% endhighlight %}
 
-#### Run Marvin on MNIST
+#### 4. Teach him MNIST digits
 
 1. Prepare data: run ```examples/mnist/prepare_mnist.m``` in ```MATLAB```
-2. Train a model: run ```./examples/mnist/demo.sh``` in ```shell```
+2. Train a model: run ```examples/mnist/demo.sh``` in ```shell```
 3. Visualize filters: run ```examples/mnist/demo_vis_filter.m``` in ```MATLAB```
