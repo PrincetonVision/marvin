@@ -5,38 +5,30 @@ title: Home
 
 ### Marvin thinks, therefore Marvin is.
 
-Never before has it been so easy to learn so deeply. Talk about feature 1, which is really very great. Feature 2 is also really great. But feature 3 is truly special: it helps you win friends and influence people. Marvin is architected for performance: both yours and your GPU's. And it all compiles before you can <s>get a cup of</s> say caffe.
+Never before has it been so easy to learn so deeply. Marvin is designed first and foremost to be hackable. It is naively simple for fast prototyping, uses only basic C/C++, and only calls CUDA and cuDNN as dependencies. All code lives in marvin.hpp and marvin.cu.
 
 ### Install in a jiffy.
 
-First, install [CUDA](https://developer.nvidia.com/cuda-downloads) and [cuDNN](https://developer.nvidia.com/cudnn). You will need to register with NVIDIA.
+#### Install CUDA and cuDNN
 
-To install cuDNN:
+Download [CUDA](https://developer.nvidia.com/cuda-downloads) and [cuDNN](https://developer.nvidia.com/cudnn). You will need to register with NVIDIA. You can find instructions to install CUDA [here](http://lmgtfy.com/?q=install+cuda). Below are instructions to install cuDNN.
 
 {% highlight bash %}
+CUDA_LIB_DIR=/usr/local/cuda/lib$([[ $(uname) == "Linux" ]] && echo 64)
+echo LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_LIB_DIR >> ~/.profile && ~/.profile
+
 tar zxvf cudnn*.tgz
-sudo cp cuda/lib/* /usr/local/cuda/lib
+sudo cp cuda/lib/* $CUDA_LIB_DIR
 sudo cp cuda/include/* /usr/local/cuda/include
 {% endhighlight %}
 
-<p>Linux:</p>
-
-{% highlight bash %}
-sudo apt-get install marvin
-{% endhighlight %}
-
-<p>OS X:</p>
-
-{% highlight bash %}
-brew install marvin
-{% endhighlight %}
+#### Install Marvin
 
 <p>From <a href="https://github.com/PrincetonVision/marvin">source</a>:</p>
 
 {% highlight bash %}
-curl -O https://github.com/PrincetonVision/marvin/tarball/master
-tar zxvf marvin* && cd marvin
-./configure && make && make install
+curl -L https://github.com/PrincetonVision/marvin/tarball/master | tar x && mv PrincetonVision* marvin
+cd marvin && ./compile.sh
 {% endhighlight %}
 
 
