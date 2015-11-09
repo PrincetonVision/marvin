@@ -5,7 +5,7 @@ title: Home
 
 ### Marvin thinks, therefore Marvin is.
 
-Never before has it been so easy to learn so deeply. Marvin is designed first and foremost to be hackable. It is naively simple for fast prototyping, uses only basic C/C++, and only calls CUDA and cuDNN as dependencies. All code lives in marvin.hpp and marvin.cu.
+Never before has it been so easy to learn so deeply. Marvin is designed first and foremost to be hackable. It is naively simple for fast prototyping, uses only basic C/C++, and only calls CUDA and cuDNN as dependencies. All code lives in ```marvin.hpp``` and ```marvin.cu```.
 
 ### Install in a jiffy.
 
