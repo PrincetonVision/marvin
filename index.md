@@ -7,7 +7,7 @@ title: Home
 
 Never before has it been so easy to learn so deeply. Marvin is designed first and foremost to be hackable. It is naively simple for fast prototyping, uses only basic C/C++, and only calls CUDA and cuDNN as dependencies. All code lives in ```marvin.hpp``` and ```marvin.cu```.
 
-### Install in a jiffy.
+### Get started in a jiffy.
 
 #### Install CUDA and cuDNN
 
@@ -22,13 +22,25 @@ sudo cp cuda/lib/* $CUDA_LIB_DIR
 sudo cp cuda/include/* /usr/local/cuda/include
 {% endhighlight %}
 
-#### Install Marvin
+#### Compile Marvin
 
 <p>From <a href="https://github.com/PrincetonVision/marvin">source</a>:</p>
 
 {% highlight bash %}
-curl -L https://github.com/PrincetonVision/marvin/tarball/master | tar x && mv PrincetonVision* marvin
-cd marvin && ./compile.sh
+curl -L https://github.com/PrincetonVision/marvin/tarball/master | tar x
+mv PrincetonVision* marvin && cd marvin && ./compile.sh
 {% endhighlight %}
 
+#### Run Marvin on MNIST
 
+1. Prepare data
+
+    Run ```examples/mnist/prepare_mnist.m``` in ```MATLAB```
+
+2. Train a model
+
+    Run ```./examples/mnist/demo.sh``` in ```shell```
+
+3. Visualize filters
+
+    Run ```examples/mnist/demo_vis_filter.m``` in ```MATLAB```

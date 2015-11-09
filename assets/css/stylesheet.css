@@ -326,6 +326,10 @@ nav ul li a:hover {
     height: 100%;
 }
 
+ol {
+    margin-left: 1.5em;
+}
+
 @media screen and (max-width: 42em) {
 
     marvin {
