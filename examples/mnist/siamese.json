@@ -1,0 +1,174 @@
+{
+	"train":
+		{
+			"path": "examples/mnist/siamese",
+			"solver": "SGD",
+			"regularizer": "L2",
+			"momentum": 0.9,
+			"weight_decay": 0.0000,
+			"base_lr": 0.01,
+			"lr_policy": "LR_inv",
+			"lr_gamma": 0.0001,
+			"lr_power": 0.75,
+			"snapshot_prefix": "examples/mnist/siamese_snapshot",
+			"max_iter": 50000,
+			"snapshot_iter": 5000,
+			"display_iter": 20,
+			"test_iter": 100,
+			"test_interval": 500,
+			"GPU": [0]			
+		},
+	"test":
+		{
+			"debug_mode": false,
+			"GPU": 0
+		},
+	"layers":[
+		{
+			"type": "MemoryData",
+			"name": "dataTrain_p",
+			"phase": "Training",
+			"file_data": "examples/mnist/train-images.tensor",
+			"file_label": "examples/mnist/train-labels.tensor",
+			"batch_size": 64,
+			"out": ["data_p","label_p"]
+		},
+		{
+			"type": "MemoryData",
+			"name": "dataTrain_q",
+			"phase": "Training",
+			"file_data": "examples/mnist/train-images.tensor",
+			"file_label": "examples/mnist/train-labels.tensor",
+			"batch_size": 64,
+			"out": ["data_q","label_q"]
+		},
+		{
+			"type": "MemoryData",
+			"name": "dataTest_p",
+			"phase": "Testing",
+			"file_data": "examples/mnist/test-images.tensor",
+			"file_label": "examples/mnist/test-labels.tensor",
+			"batch_size": 64,
+			"out": ["data_p","label_p"]
+		},
+		{
+			"type": "MemoryData",
+			"name": "dataTest_q",
+			"phase": "Testing",
+			"file_data": "examples/mnist/test-images.tensor",
+			"file_label": "examples/mnist/test-labels.tensor",
+			"batch_size": 64,
+			"out": ["data_q","label_q"]
+		},
+		{
+			"in": ["data_p","data_q"],
+			"type": "Convolution",
+			"name": "conv1",
+			"num_output": 20,
+			"window": [5,5],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv1_p","conv1_q"]
+		},
+		{
+			"in": ["conv1_p","conv1_q"],
+			"type": "Pooling",
+			"name": "pool1",
+			"mode": "max",
+			"window": [2,2],
+			"padding": [0,0],
+			"stride": [2,2],
+			"out": ["pool1_p","pool1_q"]
+		},
+		{
+			"in": ["pool1_p","pool1_q"],
+			"type": "Convolution",
+			"name": "conv2",
+			"num_output": 50,
+			"window": [5,5],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv2_p","conv2_q"]
+		},
+		{
+			"in": ["conv2_p","conv2_q"],
+			"type": "Pooling",
+			"name": "pool2",
+			"mode": "max",
+			"window": [2,2],
+			"padding": [0,0],
+			"stride": [2,2],
+			"out": ["pool2_p","pool2_q"]
+		},
+		{
+			"in": ["pool2_p","pool2_q"],
+			"type": "InnerProduct",
+			"name": "ip1",
+			"num_output": 500,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["ip1_p","ip1_q"]
+		},
+		{
+			"in": ["ip1_p","ip1_q"],
+			"type": "Activation",
+			"name": "relu1",
+			"mode": "ReLU",
+			"out": ["ip1_p","ip1_q"]
+		},
+		{
+			"in": ["ip1_p","ip1_q"],
+			"type": "InnerProduct",
+			"name": "ip2",
+			"num_output": 10,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["ip2_p","ip2_q"]
+		},
+		{
+			"in": ["ip2_p","ip2_q"],
+			"type": "InnerProduct",
+			"name": "feat",
+			"num_output": 2,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["feat_p","feat_q"]
+		},
+		{
+			"type": "ElementWise",
+			"name": "ElementWise",
+			"mode": "ElementWise_EQL",
+			"in": ["label_p","label_q"],
+			"out": ["label"]
+		},		
+		{
+			"in": ["feat_p","feat_q","label"],
+			"type": "Loss",
+			"name": "loss",
+			"mode": "Contrastive",
+			"margin": 1.0,
+			"loss_weight": 1.0
+		}
+	]
+}
