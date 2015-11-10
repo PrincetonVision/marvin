@@ -250,7 +250,7 @@ marvin {
     position: absolute;
     background: url('/assets/img/marvin.svg');
 }
-@media screen and (min-width: 42em) and (max-width: 128em) {
+@media screen and (min-width: 42em) {
     marvin {
         background-size: 8rem 8rem;
         bottom: 0;
