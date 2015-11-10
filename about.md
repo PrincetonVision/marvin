@@ -7,7 +7,7 @@ title: About
 
 Marvin is designed first and foremost to be hackable. It is naively simple for fast prototyping, uses only basic C/C++, and only calls CUDA and cuDNN as dependencies. All code lives in ```marvin.hpp``` and ```marvin.cu```.
 
-In our first iteration, we optimize obsessively for GPU memory and pay special attention on higher-dimensional data. Other frameworks overwhelmingly serve one-dimensional (e.g., natural language) and two-dimensional (e.g., images) data.
+In our first iteration, we optimize obsessively for GPU memory with FP16 and pay special attention to higher-dimensional data. Other frameworks overwhelmingly serve one-dimensional (e.g., natural language) and two-dimensional (e.g., images) data.
 
 ### Name
 Marvin is the chronically depressed, but uncommonly brilliant robot from Douglas Adams's *[Hitchhiker's Guide to the Galaxy](https://en.wikipedia.org/wiki/The_Hitchhiker%27s_Guide_to_the_Galaxy)*. He is known for his [dark humor](http://www.imdb.com/character/ch0007553/quotes).
