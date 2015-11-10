@@ -5,7 +5,7 @@ title: Home
 
 ### Marvin thinks, therefore Marvin is.
 
-Never before has it been so easy to learn so deeply. Marvin was born to be hacked, relying on few dependencies and basic C++. All code lives in [```marvin.hpp```](https://github.com/PrincetonVision/marvin/blob/master/marvin.hpp) and [```marvin.cu```](https://github.com/PrincetonVision/marvin/blob/master/marvin.cu). Win friends and influence people in four easy steps:
+Never before has it been so easy to learn so deeply. Marvin was born to be hacked, relying on few dependencies and basic C++. All code lives in two files ([```marvin.hpp```](https://github.com/PrincetonVision/marvin/blob/master/marvin.hpp) and [```marvin.cu```](https://github.com/PrincetonVision/marvin/blob/master/marvin.cu)) and all numbers take up two bytes (FP16). Win friends and influence people in four easy steps:
 
 #### 1. Find a home for Marvin
 
