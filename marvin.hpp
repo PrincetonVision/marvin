@@ -1407,6 +1407,14 @@ __global__ void Kernel_ROIbackward_4D(size_t CUDA_NUM_LOOPS, size_t N, const Sto
 	}
 }
 
+/* ----------------------------------------------------------------------------
+ * The following four functions are inspired by Ross Girshick's Fast-RCNN code,
+ * which is copyrighted by Microsoft under an MIT License.
+ *
+ * Project page: https://github.com/rbgirshick/fast-rcnn
+ * License page: https://github.com/rbgirshick/fast-rcnn/blob/master/LICENSE
+ * ----------------------------------------------------------------------------
+ */
 __global__ void Kernel_ROIPoolForward_2D(size_t CUDA_NUM_LOOPS, size_t N, const StorageT* in_data, const StorageT* in_rois, StorageT* out_data, size_t* argmax_data, const ComputeT spatial_scale, const int channels, const int height, const int width, const int pooled_height, const int pooled_width){
 	const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
 	if (idxBase >= N) return;
