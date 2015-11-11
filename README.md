@@ -36,7 +36,7 @@ The following is the citation of the current version of Marvin. Note that the re
 ```latex
 @misc{Marvin20151110,
       title        = {Marvin: A minimalist {GPU}-only {N}-dimensional {ConvNet} framework},
-      authors      = {Jianxiong Xiao and Shuran Song and Daniel Suo and Fisher Yu},
+      author       = {Jianxiong Xiao and Shuran Song and Daniel Suo and Fisher Yu},
       howpublished = {\url{http://marvin.is}},
       note         = {Accessed: 2015-11-10}
 }
