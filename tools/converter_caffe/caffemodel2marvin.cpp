@@ -1,6 +1,5 @@
 // put this file under tools folder of caffe and make again
 
-#include <stdio.h>  // for snprintf
 #include <string>
 #include <vector>
 
@@ -24,7 +23,6 @@ using std::string;
 
 #define Dtype float
 
-
 int main(int argc, char** argv) {
 
   if (argc!=4){
@@ -42,12 +40,6 @@ int main(int argc, char** argv) {
 
   for (int i = 0; i <= layers_.size(); ++i) {
 
-    //std::cout<<"blobs = "<<layers_[i]->blobs().size()<<std::endl;
-    //std::cout<<"weight = "<<layers_[i]->blobs()[0]->count()<<std::endl;
-    //std::cout<<"bias   = "<<layers_[i]->blobs()[1]->count()<<std::endl;
-    //weight = layers_[i]->blobs()[0]->cpu_data();
-    //bias   = layers_[i]->blobs()[1]->cpu_data();
-
     if (layers_[i]->blobs().size()>0){
 
       uint8_t typeValue = 1;
@@ -55,15 +47,15 @@ int main(int argc, char** argv) {
       fwrite((void*)(&typeValue), sizeof(uint8_t), 1, fmodel);
       fwrite((void*)(&typeSize), sizeof(uint32_t), 1, fmodel);
 
-      std::string filename = layer_names_[i] + std::string(".weight");
-      //const Blob<Dtype>* b = layers_[i]->blobs()[0];
+      std::string strname = layer_names_[i] + std::string(".weight");
+      std::cout<<"Layer "<<i<<": "<<strname;
       std::vector<int> dim = layers_[i]->blobs()[0]->shape();
       int n = layers_[i]->blobs()[0]->count();
       const Dtype* CPUmem = layers_[i]->blobs()[0]->cpu_data();
 
-      int lenName = filename.size();
+      int lenName = strname.size();
       if (lenName>0) fwrite((void*)(&lenName), sizeof(int), 1, fmodel);
-      fwrite((void*)(filename.data()), sizeof(char), lenName, fmodel);
+      fwrite((void*)(strname.data()), sizeof(char), lenName, fmodel);
       int nbDims = dim.size();
       fwrite((void*)(&nbDims), sizeof(int), 1, fmodel);
       if (nbDims>0) fwrite((void*)(&dim[0]), sizeof(int), nbDims, fmodel);
@@ -72,6 +64,8 @@ int main(int argc, char** argv) {
         fwrite((void*)(CPUmem), sizeof(Dtype), n, fmodel);
         if (ferror (fmodel)){ std::cout << __LINE__ <<  "disk writing failed"<<std::endl; exit(0); } 
       }
+      fflush(fmodel);
+      std::cout<<" done"<<std::endl;      
     }
 
     if (layers_[i]->blobs().size()>1){
@@ -81,19 +75,15 @@ int main(int argc, char** argv) {
       fwrite((void*)(&typeValue), sizeof(uint8_t), 1, fmodel);
       fwrite((void*)(&typeSize), sizeof(uint32_t), 1, fmodel);
 
-
-      std::string filename = layer_names_[i] + std::string(".bias");
-      //const Blob<Dtype>* b = layers_[i]->blobs()[1];
+      std::string strname = layer_names_[i] + std::string(".bias");
+      std::cout<<"Layer "<<i<<": "<<strname;
       std::vector<int> dim = layers_[i]->blobs()[1]->shape();
       int n = layers_[i]->blobs()[1]->count();
       const Dtype* CPUmem = layers_[i]->blobs()[1]->cpu_data();
 
-      //std::cout<<"bias_data: "<<CPUmem[0]<<" "<<CPUmem[1]<<" "<<CPUmem[2]<<" "<<CPUmem[3]<<" "<<CPUmem[4]<<" "<<CPUmem[5]<<std::endl;
-      //exit(0);
-
-      int lenName = filename.size();
+      int lenName = strname.size();
       if (lenName>0) fwrite((void*)(&lenName), sizeof(int), 1, fmodel);
-      fwrite((void*)(filename.data()), sizeof(char), lenName, fmodel);
+      fwrite((void*)(strname.data()), sizeof(char), lenName, fmodel);
       int nbDims = dim.size();
       fwrite((void*)(&nbDims), sizeof(int), 1, fmodel);
       if (nbDims>0) fwrite((void*)(&dim[0]), sizeof(int), nbDims, fmodel);
@@ -102,6 +92,8 @@ int main(int argc, char** argv) {
         fwrite((void*)(CPUmem), sizeof(Dtype), n, fmodel);
         if (ferror (fmodel)){ std::cout << __LINE__ <<  "disk writing failed"<<std::endl; exit(0); } 
       }
+      fflush(fmodel);
+      std::cout<<" done"<<std::endl;
     }
   }
 
@@ -109,4 +101,3 @@ int main(int argc, char** argv) {
 
   return 0;
 }
-
