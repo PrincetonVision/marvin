@@ -2,10 +2,11 @@
 
 Marvin is a GPU-only neural network framework made with simplicity, hackability, speed, memory consumption, and high dimensional data in mind.
 
-## Dependences
+## Dependencies
 
-Download [CUDA 7.5](https://developer.nvidia.com/cuda-downloads) and [cuDNN 3](https://developer.nvidia.com/cudnn). You will need to register with NVIDIA. Below are some additional steps to set up cuDNN 3:
+Download [CUDA 7.5](https://developer.nvidia.com/cuda-downloads) and [cuDNN 3](https://developer.nvidia.com/cudnn). You will need to register with NVIDIA. For Windows, you will need to download Microsoft Visual Studio 2013 [here](http://go.microsoft.com/fwlink/?LinkId=517284). Below are some additional steps to set up cuDNN 3:
 
+### Linux and OS X
 ```shell
 CUDA_LIB_DIR=/usr/local/cuda/lib$([[ $(uname) == "Linux" ]] && echo 64)
 echo LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_LIB_DIR >> ~/.profile && ~/.profile
@@ -15,17 +16,46 @@ sudo cp cuda/lib/* $CUDA_LIB_DIR
 sudo cp cuda/include/* /usr/local/cuda/include
 ```
 
+### Windows
+- Copy ```CUDNN_PATH/bin/*``` to ```CUDA_PATH/bin```
+- Copy ```CUDNN_PATH/lib/*``` to ```CUDA_PATH/lib```
+- Copy ```CUDNN_PATH/include/*``` to ```CUDA_PATH/include```
+
 ## Compilation
 
+### Linux and OS X
 ```shell
 ./compile.sh
 ```
 
+### Windows
+- Create a new project in Visual Studio 2013
+  - File -> New Project (Ctrl-Shift-N)
+  - Installed -> Templates -> NVIDIA -> CUDA 7.5
+- Add ```marvin.hpp``` and ```marvin.cu``` to the project
+  - Project -> Add Existing Item (Shift-Alt-A)
+  - Select ```marvin.hpp``` and ```marvin.cu``` from Explorer
+- Add cuDNN and cuBLAS libraries
+  - Project -> [Project Name] Properties -> Configuration Properties -> Linker -> Input
+  - Add ```cudnn.lib``` and ```cublas.lib``` to the semicolon-delimited list called ```Additional Dependencies``` (assumes both files are in ```CUDA_PATH/lib```)
+- Build project and run ```marvin.exe``` with appropriate commands
+
 ## MNIST
 
-1. Prepare data: run examples/mnist/prepare_mnist.m in Matlab
-2. Train a model: run ./examples/mnist/demo.sh in shell
-3. Visualize filters: run examples/mnist/demo_vis_filter.m in Matlab
+### Creating from scratch
+1. Prepare data: run ```examples/mnist/prepare_mnist.m``` in ```MATLAB```
+2. Train a model: run ```examples/mnist/demo.sh in``` ```shell```
+3. Visualize filters: run ```examples/mnist/demo_vis_filter.m``` in ```MATLAB```
+
+### Using prebuilt data
+1. Download four tensor files to ```examples/mnist```
+  - [Test images](http://vision.princeton.edu/marvin/mnist/test-images.tensor)
+  - [Test labels](http://vision.princeton.edu/marvin/mnist/test-labels.tensor)
+  - [Training images](http://vision.princeton.edu/marvin/mnist/train-images.tensor)
+  - [Training labels](http://vision.princeton.edu/marvin/mnist/train-labels.tensor)
+2. Run Marvin from the root directory
+  - Train: ```marvin train examples/mnist/lenet.json```
+  - Test: ```marvin test examples/mnist/lenet.json examples/mnist/lenet.marvin```
 
 ## Tutorials and Documentation
 Please see our website at [http://marvin.is](http://marvin.is).
