@@ -80,7 +80,7 @@
 #include <cublas_v2.h>
 #include <curand.h>
 #include <cudnn.h>
-#include <sys/time.h>
+#include <chrono>
 
 namespace marvin {
 
@@ -168,9 +168,7 @@ void checkCUBLAS(const int lineNumber, cublasStatus_t status) {
 }
 
 unsigned long long get_timestamp() {
-	struct timeval now;
-	gettimeofday (&now, NULL);
-	return  now.tv_usec + (unsigned long long)now.tv_sec * 1000000;
+	return (unsigned long long)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
 unsigned long long ticBegin;
@@ -2850,7 +2848,7 @@ public:
 
 template <class T>
 class DiskDataLayer : public DataLayer {
-	std::future<void> lock;
+	//std::future<void (&)()> lock;
 	FILE* dataFILE;
 	Tensor<StorageT>* labelCPUall;
 	std::vector<size_t> ordering; 
@@ -2964,7 +2962,7 @@ public:
 	};
 
 	~DiskDataLayer(){
-		if (lock.valid()) lock.wait();
+		// if (lock.valid()) lock.wait();
 		delete distribution_bernoulli;
 		for (int i=0;i<distribution_uniform.size();++i) delete distribution_uniform[i];
 		if (dataFILE!=NULL) fclose(dataFILE);
@@ -3070,11 +3068,12 @@ public:
 	};
 
 	void forward(Phase phase_){
-		lock.wait();
+		// lock.wait();
 		epoch = epoch_prefetch;
 		Kernel_convert_to_StorageT_subtract<<<CUDA_GET_BLOCKS(numel_batch_all_channel_crop), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(numel_batch_all_channel_crop), numel_batch_all_channel_crop, numel_all_channel_crop, dataGPU, (in.size()==0? NULL: in[0]->dataGPU), out[0]->dataGPU);
 		std::swap(out[1]->dataGPU,labelGPU);
-		lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
+		// lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
+		prefetch();
 	};
 
 
@@ -3111,8 +3110,8 @@ public:
 		checkCUDA(__LINE__, cudaMalloc(&dataGPU, numel_batch_all_channel_crop * sizeof(T)) );
 		memoryBytes += numel_batch_all_channel_crop * sizeof(T);
 
-		lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
-
+		// lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
+		prefetch();
 		return memoryBytes;
 	};	
 };
@@ -3547,7 +3546,7 @@ public:
 class DropoutLayer: public Layer{
 	ComputeT scale;
 	std::bernoulli_distribution* distribution;
-	std::future<void> lock;
+	// std::future<void (&)()> lock;
 	bool current_mask;
 	std::vector< StorageT* > GPUmask[2];
 	std::vector< StorageT* > CPUmask;	
@@ -3619,13 +3618,13 @@ public:
 			memoryBytes += out[i]->Malloc(in[i]->dim);
 		}
 
-		lock = std::async(std::launch::async,&DropoutLayer::generateMask,this);
-
+		// lock = std::async(std::launch::async,&DropoutLayer::generateMask,this);
+		generateMask();
 		return memoryBytes;
 	};
 
 	~DropoutLayer(){
-		if (lock.valid()) lock.wait();
+		// if (lock.valid()) lock.wait();
 		for (int i=0;i<GPUmask[0].size();++i){
 			checkCUDA(__LINE__, cudaFree(GPUmask[0][i]) );
 			checkCUDA(__LINE__, cudaFree(GPUmask[1][i]) );
@@ -3636,9 +3635,10 @@ public:
 
 	void forward(Phase phase_){
 		if ( phase_==Training ){
-			lock.wait();
+			// lock.wait();
 			current_mask = !current_mask;
-			lock = std::async(std::launch::async,&DropoutLayer::generateMask,this);
+			// lock = std::async(std::launch::async,&DropoutLayer::generateMask,this);
+			generateMask();
 			for (int i=0;i<in.size();++i){
 				// zeros out some elements
 				GPU_elementwise_multiplication(SIZEmask[i], out[i]->dataGPU, GPUmask[current_mask][i], in[i]->dataGPU);
@@ -5565,7 +5565,7 @@ public:
 				}else{
 					for (int t=0; t<threads.size(); ++t){
 						nets[t]->phase = Testing;
-						threads[t] = std::thread(&Net::stepTest, nets[t], true);	//nets[t]->stepTest();
+						// threads[t] = std::thread(&Net::stepTest, nets[t], true);	//nets[t]->stepTest();
 					}
 					for (int t=0; t<threads.size(); ++t){
 						threads[t].join();
@@ -5591,7 +5591,7 @@ public:
 				nets[0]->stepTrain(false); 
 			}else{		
 				for (int t=0; t<threads.size(); ++t){
-					threads[t] = std::thread(&Net::stepTrain, nets[t], true);	//nets[t]->stepTrain(); 
+					// threads[t] = std::thread(&Net::stepTrain, nets[t], true);	//nets[t]->stepTrain(); 
 				}
 				for (int t=0; t<threads.size(); ++t){
 					threads[t].join();
@@ -5614,7 +5614,7 @@ public:
 					nets[0]->eval(false);
 				}else{
 					for (int t=0; t<threads.size(); ++t){
-						threads[t] = std::thread(&Net::eval, nets[t], true); //nets[t]->eval(); 
+						// threads[t] = std::thread(&Net::eval, nets[t], true); //nets[t]->eval(); 
 					}
 					for (int t=0; t<threads.size(); ++t){
 						threads[t].join();
