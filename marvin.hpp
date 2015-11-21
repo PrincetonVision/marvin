@@ -3939,7 +3939,8 @@ public:
 		for (int i=0;i<out.size();++i){
 			out[i]->need_diff = in[i]->need_diff;
 			out[i]->receptive_field = in[i]->receptive_field;
-			out[i]->receptive_gap = in[i]->receptive_gap;			
+			out[i]->receptive_gap = in[i]->receptive_gap;		
+			out[i]->receptive_offset = in[i]->receptive_offset;
 			memoryBytes += out[i]->Malloc(in[i]->dim);
 		}
 		return memoryBytes;
@@ -4061,7 +4062,8 @@ public:
 			}
 
 			out[i]->receptive_field = in[i]->receptive_field;
-			out[i]->receptive_gap = in[i]->receptive_gap;			
+			out[i]->receptive_gap = in[i]->receptive_gap;
+			out[i]->receptive_offset = in[i]->receptive_offset;
 			memoryBytes += out[i]->Malloc(dim);
 		}
 		return memoryBytes;
@@ -4122,6 +4124,7 @@ public:
 
 			out[i]->receptive_field = in[i*2]->receptive_field;
 			out[i]->receptive_gap = in[i*2]->receptive_gap;			
+			out[i]->receptive_offset = in[i*2]->receptive_offset;
 			memoryBytes += out[i]->Malloc(dim);
 		}
 		return memoryBytes;
@@ -4294,10 +4297,12 @@ public:
 
 			out[j]->receptive_field = in[j*in_group]->receptive_field;
 			out[j]->receptive_gap = in[j*in_group]->receptive_gap;
+			out[j]->receptive_offset = in[j*in_group]->receptive_offset;
 			for(int i=j*in_group+1; i<(j+1)*in_group;i++){
 				for(size_t d=0; d<out[j]->receptive_field.size();++d){
-					out[j]->receptive_field[d] = max(out[j]->receptive_field[d],in[i]->receptive_field[d]);
-					out[j]->receptive_gap  [d] = max(out[j]->receptive_gap  [d],in[i]->receptive_gap  [d]);
+					out[j]->receptive_field  [d] = max(out[j]->receptive_field  [d],in[i]->receptive_field  [d]);
+					out[j]->receptive_gap    [d] = max(out[j]->receptive_gap    [d],in[i]->receptive_gap    [d]);
+					out[j]->receptive_offset [d] = max(out[j]->receptive_offset [d],in[i]->receptive_offset [d]);
 				}
 			}
 
@@ -4382,7 +4387,7 @@ public:
 
 			out[j]->receptive_field = in[j*in_group]->receptive_field;
 			out[j]->receptive_gap = in[j*in_group]->receptive_gap;
-			out[j]->receptive_field = in[j*in_group]->receptive_field;
+			out[j]->receptive_offset = in[j*in_group]->receptive_offset;
 			for(int i=j*in_group+1; i<(j+1)*in_group;i++){
 				for(size_t d=0; d<out[j]->receptive_field.size();++d){
 					out[j]->receptive_field[d]  = max(out[j]->receptive_field [d],in[i]->receptive_field [d]);

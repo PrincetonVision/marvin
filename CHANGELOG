@@ -1,0 +1,6 @@
+v0.1.1
+- Add fflush to write files in case some layer future layer crashes the program
+- BUGFIX: Set receptive field's offset for each layer
+
+v0.1.0
+- Initial commit
