@@ -3841,7 +3841,7 @@ public:
 			dimOut[0] = in[i]->dim[0]; // size of mini-bath
 			dimOut[1] = in[i]->dim[1]; // channels
 			for (int d=2;d<in[i]->dim.size();++d){
-				dimOut[d] = 1 + (in[i]->dim[d] + 2*padding[d-2] - window[d-2])/stride[d-2];
+			  dimOut[d] = 1 + static_cast<int>(ceil(static_cast<float>(in[i]->dim[d] + 2*padding[d-2] - window[d-2])/stride[d-2]));
 			}
 
 			size_t dall = in[i]->receptive_field.size();
