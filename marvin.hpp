@@ -2161,10 +2161,10 @@ std::vector<Tensor<T>*> readTensors(std::string filename, size_t max_count = SIZ
         tensors.push_back(new Tensor<T>(fp)); 
         count++;
         if (count>=max_count) break;
+		int c = getc(fp);
+		ungetc(c, fp);
     }
     fclose(fp);
-    if (tensors[tensors.size()-1]->CPUmem == NULL) tensors.resize(tensors.size()-1);
-
     return tensors;
 }
 
