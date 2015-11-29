@@ -1,0 +1,469 @@
+{
+	"train":
+    {
+      "path": "mnist/lenet",
+      "solver": "SGD",
+      "regularizer": "L2",
+      "momentum": 0.9,
+      "weight_decay": 0.0005,
+      "base_lr": 0.01,
+      "lr_policy": "LR_inv",
+      "lr_gamma": 0.0001,
+      "lr_power": 0.75,
+      "max_iter": 10000,
+      "train_iter": 1,
+      "snapshot_iter": 5000,
+      "display_iter": 10,
+      "test_iter": 10,
+      "test_interval": 500,
+      "debug_mode": false,
+      "GPU_solver": 0,
+      "GPU": [0]
+    },
+    "test":
+    {
+      "debug_mode": false,
+      "GPU": 0
+    },
+    "layers":[
+    {
+      "type": "Tensor",
+      "name": "dataTest",
+      "phase": "Testing",
+      "files": ["demo/images.tensor"],
+      "batch_size": 1,
+      "out": ["data"]
+    },
+    {
+      "name": "conv1_1",
+      "type": "Convolution",
+      "in": ["data"],
+      "out": ["conv1_1"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 64,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu1_1",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv1_1"],
+      "out": ["conv1_1"]
+    },
+    {
+      "name": "conv1_2",
+      "type": "Convolution",
+      "in": ["conv1_1"],
+      "out": ["conv1_2"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 64,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu1_2",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv1_2"],
+      "out": ["conv1_2"]
+    },
+    {
+      "name": "pool1",
+      "type": "Pooling",
+      "in": ["conv1_2"],
+      "out": ["pool1"],
+      "mode": "max",
+      "window": [2,2],
+      "stride": [2,2]
+    },
+    {
+      "name": "conv2_1",
+      "type": "Convolution",
+      "in": ["pool1"],
+      "out": ["conv2_1"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 128,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu2_1",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv2_1"],
+      "out": ["conv2_1"]
+    },
+    {
+      "name": "conv2_2",
+      "type": "Convolution",
+      "in": ["conv2_1"],
+      "out": ["conv2_2"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 128,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu2_2",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv2_2"],
+      "out": ["conv2_2"]
+    },
+    {
+      "name": "pool2",
+      "type": "Pooling",
+      "in": ["conv2_2"],
+      "out": ["pool2"],
+      "mode": "max",
+      "window": [2,2],
+      "stride": [2,2]
+    },
+    {
+      "name": "conv3_1",
+      "type": "Convolution",
+      "in": ["pool2"],
+      "out": ["conv3_1"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 256,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu3_1",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv3_1"],
+      "out": ["conv3_1"]
+    },
+    {
+      "name": "conv3_2",
+      "type": "Convolution",
+      "in": ["conv3_1"],
+      "out": ["conv3_2"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 256,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu3_2",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv3_2"],
+      "out": ["conv3_2"]
+    },
+    {
+      "name": "conv3_3",
+      "type": "Convolution",
+      "in": ["conv3_2"],
+      "out": ["conv3_3"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 256,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu3_3",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv3_3"],
+      "out": ["conv3_3"]
+    },
+    {
+      "name": "conv3_4",
+      "type": "Convolution",
+      "in": ["conv3_3"],
+      "out": ["conv3_4"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 256,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu3_4",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv3_4"],
+      "out": ["conv3_4"]
+    },
+    {
+      "name": "pool3",
+      "type": "Pooling",
+      "in": ["conv3_4"],
+      "out": ["pool3"],
+      "mode": "max",
+      "window": [2,2],
+      "stride": [2,2]
+    },
+    {
+      "name": "conv4_1",
+      "type": "Convolution",
+      "in": ["pool3"],
+      "out": ["conv4_1"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu4_1",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv4_1"],
+      "out": ["conv4_1"]
+    },
+    {
+      "name": "conv4_2",
+      "type": "Convolution",
+      "in": ["conv4_1"],
+      "out": ["conv4_2"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu4_2",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv4_2"],
+      "out": ["conv4_2"]
+    },
+    {
+      "name": "conv4_3",
+      "type": "Convolution",
+      "in": ["conv4_2"],
+      "out": ["conv4_3"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu4_3",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv4_3"],
+      "out": ["conv4_3"]
+    },
+    {
+      "name": "conv4_4",
+      "type": "Convolution",
+      "in": ["conv4_3"],
+      "out": ["conv4_4"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu4_4",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv4_4"],
+      "out": ["conv4_4"]
+    },
+    {
+      "name": "pool4",
+      "type": "Pooling",
+      "in": ["conv4_4"],
+      "out": ["pool4"],
+      "mode": "max",
+      "window": [2,2],
+      "stride": [2,2]
+    },
+    {
+      "name": "conv5_1",
+      "type": "Convolution",
+      "in": ["pool4"],
+      "out": ["conv5_1"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu5_1",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv5_1"],
+      "out": ["conv5_1"]
+    },
+    {
+      "name": "conv5_2",
+      "type": "Convolution",
+      "in": ["conv5_1"],
+      "out": ["conv5_2"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu5_2",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv5_2"],
+      "out": ["conv5_2"]
+    },
+    {
+      "name": "conv5_3",
+      "type": "Convolution",
+      "in": ["conv5_2"],
+      "out": ["conv5_3"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu5_3",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv5_3"],
+      "out": ["conv5_3"]
+    },
+    {
+      "name": "conv5_4",
+      "type": "Convolution",
+      "in": ["conv5_3"],
+      "out": ["conv5_4"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 512,
+      "padding": [1,1],
+      "window": [3,3]
+    },
+    {
+      "name": "relu5_4",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["conv5_4"],
+      "out": ["conv5_4"]
+    },
+    {
+      "name": "pool5",
+      "type": "Pooling",
+      "in": ["conv5_4"],
+      "out": ["pool5"],
+      "mode": "max",
+      "window": [2,2],
+      "stride": [2,2]
+    },
+
+    {
+      "name": "fc6",
+      "type": "InnerProduct",
+      "in": ["pool5"],
+      "out": ["fc6"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 4096
+    },
+    {
+      "name": "relu6",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["fc6"],
+      "out": ["fc6"]
+    },
+    {
+      "name": "drop6",
+      "type": "Dropout",
+      "in": ["fc6"],
+      "out": ["fc6"],
+      "dropout_ratio": 0.5
+    },
+     {
+      "name": "fc7",
+      "type": "InnerProduct",
+      "in": ["fc6"],
+      "out": ["fc7"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 4096
+    },
+    {
+      "name": "relu7",
+      "type": "Activation",
+      "mode": "ReLU",
+      "in": ["fc7"],
+      "out": ["fc7"]
+    },
+    {
+      "name": "fc8",
+      "type": "InnerProduct",
+      "in": ["fc7"],
+      "out": ["fc8"],
+      "weight_lr_mult": 1.0,
+      "weight_decay_mult": 1.0,
+      "bias_lr_mult": 2.0,
+      "bias_decay_mult": 0.0,
+      "num_output": 1000,
+      "weight_filler": "Gaussian",
+      "weight_filler_param": 0.01,
+      "bias_filler": "Constant",
+      "bias_filler_param": 0.0
+    },
+    {
+      "in": ["fc8"],
+      "type": "Softmax",
+      "stable_gradient": true,
+      "name": "prob",
+      "out": ["prob"]
+    }
+    ]
+}

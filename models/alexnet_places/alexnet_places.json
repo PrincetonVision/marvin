@@ -1,0 +1,485 @@
+{
+	"train":
+		{
+			"path": "examples/places/",
+			"snapshot_prefix": "examples/places/alexnet_places_snapshot",
+			"solver": "SGD",
+			"regularizer": "L2",
+			"momentum": 0.9,
+			"weight_decay": 0.0005,
+			"base_lr": 0.01,
+			"lr_policy": "LR_step",
+			"lr_gamma": 0.1,
+			"lr_stepsize": 100000,
+			"max_iter": 450000,
+			"snapshot_iter": 10000,
+			"display_iter": 20,
+			"test_iter": 100,
+			"test_interval": 100,
+			"GPU": [0],
+			"debug_mode": false
+		},
+	"test":
+		{
+			"GPU": 0,
+			"debug_mode": false
+		},
+	"layers":[
+		{
+			"type": "DiskData",
+			"name": "dataTrain",
+			"phase": "Training",
+			"mirror": false,
+			"size_crop": [227,227],
+			"file_data": "data/places/train_data.tensor",
+			"file_label": "data/places/train_label.tensor",
+			"file_mean": "data/places/train_mean_256.tensor",
+			"batch_size": 256,
+			"out": ["data","label"]
+		},
+		{
+			"type": "DiskData",
+			"name": "dataTest",
+			"phase": "Testing",
+			"mirror": false,
+			"size_crop": [227,227],
+			"file_data": "data/places/val_data.tensor",
+			"file_label": "data/places/val_label.tensor",
+			"file_mean": "data/places/train_mean_256.tensor",
+			"batch_size": 50,
+			"out": ["data","label"]
+		},
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.0,
+            "bias_lr_mult": 2.0,
+            "in": [
+                "data"
+            ],
+            "name": "conv1",
+            "num_output": 96,
+            "out": [
+                "conv1"
+            ],
+            "padding": [
+                0,
+                0
+            ],
+            "stride": [
+                4,
+                4
+            ],
+            "type": "Convolution",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0,
+            "window": [
+                11,
+                11
+            ]
+        },
+        {
+            "in": [
+                "conv1"
+            ],
+            "mode": "ReLU",
+            "name": "relu1",
+            "out": [
+                "conv1"
+            ],
+            "type": "Activation"
+        },
+        {
+            "alpha": 0.0001,
+            "beta": 0.75,
+            "in": [
+                "conv1"
+            ],
+            "k": 1,
+            "local_size": 5,
+            "name": "norm1",
+            "out": [
+                "norm1"
+            ],
+            "type": "LRN"
+        },
+        {
+            "in": [
+                "norm1"
+            ],
+            "mode": "max",
+            "name": "pool1",
+            "out": [
+                "pool1"
+            ],
+            "padding": [
+                0,
+                0
+            ],
+            "stride": [
+                2,
+                2
+            ],
+            "type": "Pooling",
+            "window": [
+                3,
+                3
+            ]
+        },
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.1,
+            "bias_lr_mult": 2.0,
+            "group": 2,
+            "in": [
+                "pool1"
+            ],
+            "name": "conv2",
+            "num_output": 256,
+            "out": [
+                "conv2"
+            ],
+            "padding": [
+                2,
+                2
+            ],
+            "stride": [
+                1,
+                1
+            ],
+            "type": "Convolution",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0,
+            "window": [
+                5,
+                5
+            ]
+        },
+        {
+            "in": [
+                "conv2"
+            ],
+            "mode": "ReLU",
+            "name": "relu2",
+            "out": [
+                "conv2"
+            ],
+            "type": "Activation"
+        },
+        {
+            "alpha": 0.0001,
+            "beta": 0.75,
+            "in": [
+                "conv2"
+            ],
+            "k": 1,
+            "local_size": 5,
+            "name": "norm2",
+            "out": [
+                "norm2"
+            ],
+            "type": "LRN"
+        },
+        {
+            "in": [
+                "norm2"
+            ],
+            "mode": "max",
+            "name": "pool2",
+            "out": [
+                "pool2"
+            ],
+            "padding": [
+                0,
+                0
+            ],
+            "stride": [
+                2,
+                2
+            ],
+            "type": "Pooling",
+            "window": [
+                3,
+                3
+            ]
+        },
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.0,
+            "bias_lr_mult": 2.0,
+            "in": [
+                "pool2"
+            ],
+            "name": "conv3",
+            "num_output": 384,
+            "out": [
+                "conv3"
+            ],
+            "padding": [
+                1,
+                1
+            ],
+            "stride": [
+                1,
+                1
+            ],
+            "type": "Convolution",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0,
+            "window": [
+                3,
+                3
+            ]
+        },
+        {
+            "in": [
+                "conv3"
+            ],
+            "mode": "ReLU",
+            "name": "relu3",
+            "out": [
+                "conv3"
+            ],
+            "type": "Activation"
+        },
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.1,
+            "bias_lr_mult": 2.0,
+            "group": 2,
+            "in": [
+                "conv3"
+            ],
+            "name": "conv4",
+            "num_output": 384,
+            "out": [
+                "conv4"
+            ],
+            "padding": [
+                1,
+                1
+            ],
+            "stride": [
+                1,
+                1
+            ],
+            "type": "Convolution",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0,
+            "window": [
+                3,
+                3
+            ]
+        },
+        {
+            "in": [
+                "conv4"
+            ],
+            "mode": "ReLU",
+            "name": "relu4",
+            "out": [
+                "conv4"
+            ],
+            "type": "Activation"
+        },
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.1,
+            "bias_lr_mult": 2.0,
+            "group": 2,
+            "in": [
+                "conv4"
+            ],
+            "name": "conv5",
+            "num_output": 256,
+            "out": [
+                "conv5"
+            ],
+            "padding": [
+                1,
+                1
+            ],
+            "stride": [
+                1,
+                1
+            ],
+            "type": "Convolution",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0,
+            "window": [
+                3,
+                3
+            ]
+        },
+        {
+            "in": [
+                "conv5"
+            ],
+            "mode": "ReLU",
+            "name": "relu5",
+            "out": [
+                "conv5"
+            ],
+            "type": "Activation"
+        },
+        {
+            "in": [
+                "conv5"
+            ],
+            "mode": "max",
+            "name": "pool5",
+            "out": [
+                "pool5"
+            ],
+            "padding": [
+                0,
+                0
+            ],
+            "stride": [
+                2,
+                2
+            ],
+            "type": "Pooling",
+            "window": [
+                3,
+                3
+            ]
+        },
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.1,
+            "bias_lr_mult": 2.0,
+            "in": [
+                "pool5"
+            ],
+            "name": "fc6",
+            "num_output": 4096,
+            "out": [
+                "fc6"
+            ],
+            "type": "InnerProduct",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0
+        },
+        {
+            "in": [
+                "fc6"
+            ],
+            "mode": "ReLU",
+            "name": "relu6",
+            "out": [
+                "fc6"
+            ],
+            "type": "Activation"
+        },
+        {
+            "dropout_ratio": 0.5,
+            "in": [
+                "fc6"
+            ],
+            "name": "drop6",
+            "out": [
+                "fc6"
+            ],
+            "type": "Dropout"
+        },
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.1,
+            "bias_lr_mult": 2.0,
+            "in": [
+                "fc6"
+            ],
+            "name": "fc7",
+            "num_output": 4096,
+            "out": [
+                "fc7"
+            ],
+            "type": "InnerProduct",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0
+        },
+        {
+            "in": [
+                "fc7"
+            ],
+            "mode": "ReLU",
+            "name": "relu7",
+            "out": [
+                "fc7"
+            ],
+            "type": "Activation"
+        },
+        {
+            "dropout_ratio": 0.5,
+            "in": [
+                "fc7"
+            ],
+            "name": "drop7",
+            "out": [
+                "fc7"
+            ],
+            "type": "Dropout"
+        },
+        {
+            "bias_decay_mult": 0.0,
+            "bias_filler": "Constant",
+            "bias_filler_param": 0.0,
+            "bias_lr_mult": 2.0,
+            "in": [
+                "fc7"
+            ],
+            "name": "fc8",
+            "num_output": 205,
+            "out": [
+                "fc8"
+            ],
+            "type": "InnerProduct",
+            "weight_decay_mult": 1.0,
+            "weight_filler": "Gaussian",
+            "weight_filler_param": 0,
+            "weight_lr_mult": 1.0
+        },
+        {
+            "in": [
+                "fc8"
+            ],
+            "name": "loss",
+            "out": [
+                "loss"
+            ],
+            "stable_gradient": true,
+            "type": "Softmax"
+        },
+        {
+            "in": [
+                "loss",
+                "label"
+            ],
+            "mode": "MultinomialLogistic_StableSoftmax",
+            "name": "loss_loss",
+            "stable_gradient": true,
+            "type": "Loss"
+        }
+	]
+}
