@@ -1,5 +1,5 @@
 {
-	"train":
+    "train":
     {
       "path": "mnist/lenet",
       "solver": "SGD",

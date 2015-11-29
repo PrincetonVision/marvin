@@ -1,3260 +1,3272 @@
 {
-	"train":
-		{
-			"path": "examples/imagenet/",
-			"snapshot_prefix": "examples/imagenet/googlenet_imagenet_snapshot",
-			"solver": "SGD",
-			"regularizer": "L2",
-			"momentum": 0.9,
-			"weight_decay": 0.0005,
-			"base_lr": 0.01,
-			"lr_policy": "LR_step",
-			"lr_gamma": 0.1,
-			"lr_stepsize": 100000,
-			"max_iter": 450000,
-			"snapshot_iter": 10000,
-			"display_iter": 20,
-			"test_iter": 100,
-			"test_interval": 100,
-			"GPU": [0],
-			"debug_mode": false
-		},
-	"test":
-		{
-			"GPU": 0,
-			"debug_mode": false
-		},
-	"layers":[
-		{
-			"type": "DiskData",
-			"name": "dataTrain",
-			"phase": "Training",
-			"mirror": false,
-			"size_crop": [224, 224],
-			"file_data": "data/imagenet/train_data.tensor",
-			"file_label": "data/imagenet/train_label.tensor",
-			"file_mean": "data/imagenet/train_mean_224.tensor",
-			"batch_size": 32,
-			"out": ["data","label"]
-		},
-		{
-			"type": "DiskData",
-			"name": "dataTest",
-			"phase": "Testing",
-			"mirror": false,
-			"size_crop": [224, 224],
-			"file_data": "data/imagenet/val_data.tensor",
-			"file_label": "data/imagenet/val_label.tensor",
-			"file_mean": "data/imagenet/train_mean_224.tensor",
-			"batch_size": 20,
-			"out": ["data","label"]
-		},
+    "train":{
+        "path":"examples/imagenet/",
+        "snapshot_prefix":"examples/imagenet/googlenet_imagenet_snapshot",
+        "solver":"SGD",
+        "regularizer":"L2",
+        "momentum":0.9,
+        "weight_decay":0.0005,
+        "base_lr":0.01,
+        "lr_policy":"LR_step",
+        "lr_gamma":0.1,
+        "lr_stepsize":100000,
+        "max_iter":450000,
+        "snapshot_iter":10000,
+        "display_iter":20,
+        "test_iter":100,
+        "test_interval":100,
+        "GPU":[
+            0
+        ],
+        "debug_mode":false
+    },
+    "test":{
+        "GPU":0,
+        "debug_mode":false
+    },
+    "layers":[
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "type":"DiskData",
+            "name":"dataTrain",
+            "phase":"Training",
+            "mirror":false,
+            "size_crop":[
+                224,
+                224
+            ],
+            "file_data":"data/imagenet/train_data.tensor",
+            "file_label":"data/imagenet/train_label.tensor",
+            "file_mean":"data/imagenet/train_mean_224.tensor",
+            "batch_size":32,
+            "out":[
+                "data",
+                "label"
+            ]
+        },
+        {
+            "type":"DiskData",
+            "name":"dataTest",
+            "phase":"Testing",
+            "mirror":false,
+            "size_crop":[
+                224,
+                224
+            ],
+            "file_data":"data/imagenet/val_data.tensor",
+            "file_label":"data/imagenet/val_label.tensor",
+            "file_mean":"data/imagenet/train_mean_224.tensor",
+            "batch_size":32,
+            "out":[
+                "data",
+                "label"
+            ]
+        },
+        {
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "data"
             ],
-            "name": "conv1/7x7_s2",
-            "num_output": 64,
-            "out": [
+            "name":"conv1/7x7_s2",
+            "num_output":64,
+            "out":[
                 "conv1/7x7_s2"
             ],
-            "padding": [
+            "padding":[
                 3,
                 3
             ],
-            "stride": [
+            "stride":[
                 2,
                 2
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 7,
                 7
             ]
         },
         {
-            "in": [
+            "in":[
                 "conv1/7x7_s2"
             ],
-            "mode": "ReLU",
-            "name": "conv1/relu_7x7",
-            "out": [
+            "mode":"ReLU",
+            "name":"conv1/relu_7x7",
+            "out":[
                 "conv1/7x7_s2"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "conv1/7x7_s2"
             ],
-            "mode": "max",
-            "name": "pool1/3x3_s2",
-            "out": [
+            "mode":"max",
+            "name":"pool1/3x3_s2",
+            "out":[
                 "pool1/3x3_s2"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 2,
                 2
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "alpha": 0.0001,
-            "beta": 0.75,
-            "in": [
+            "alpha":0.0001,
+            "beta":0.75,
+            "in":[
                 "pool1/3x3_s2"
             ],
-            "k": 1,
-            "local_size": 5,
-            "name": "pool1/norm1",
-            "out": [
+            "k":1,
+            "local_size":5,
+            "name":"pool1/norm1",
+            "out":[
                 "pool1/norm1"
             ],
-            "type": "LRN"
+            "type":"LRN"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool1/norm1"
             ],
-            "name": "conv2/3x3_reduce",
-            "num_output": 64,
-            "out": [
+            "name":"conv2/3x3_reduce",
+            "num_output":64,
+            "out":[
                 "conv2/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "conv2/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "conv2/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"conv2/relu_3x3_reduce",
+            "out":[
                 "conv2/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "conv2/3x3_reduce"
             ],
-            "name": "conv2/3x3",
-            "num_output": 192,
-            "out": [
+            "name":"conv2/3x3",
+            "num_output":192,
+            "out":[
                 "conv2/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "conv2/3x3"
             ],
-            "mode": "ReLU",
-            "name": "conv2/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"conv2/relu_3x3",
+            "out":[
                 "conv2/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "alpha": 0.0001,
-            "beta": 0.75,
-            "in": [
+            "alpha":0.0001,
+            "beta":0.75,
+            "in":[
                 "conv2/3x3"
             ],
-            "k": 1,
-            "local_size": 5,
-            "name": "conv2/norm2",
-            "out": [
+            "k":1,
+            "local_size":5,
+            "name":"conv2/norm2",
+            "out":[
                 "conv2/norm2"
             ],
-            "type": "LRN"
+            "type":"LRN"
         },
         {
-            "in": [
+            "in":[
                 "conv2/norm2"
             ],
-            "mode": "max",
-            "name": "pool2/3x3_s2",
-            "out": [
+            "mode":"max",
+            "name":"pool2/3x3_s2",
+            "out":[
                 "pool2/3x3_s2"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 2,
                 2
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool2/3x3_s2"
             ],
-            "name": "inception_3a/1x1",
-            "num_output": 64,
-            "out": [
+            "name":"inception_3a/1x1",
+            "num_output":64,
+            "out":[
                 "inception_3a/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_3a/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3a/relu_1x1",
+            "out":[
                 "inception_3a/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool2/3x3_s2"
             ],
-            "name": "inception_3a/3x3_reduce",
-            "num_output": 96,
-            "out": [
+            "name":"inception_3a/3x3_reduce",
+            "num_output":96,
+            "out":[
                 "inception_3a/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_3a/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3a/relu_3x3_reduce",
+            "out":[
                 "inception_3a/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3a/3x3_reduce"
             ],
-            "name": "inception_3a/3x3",
-            "num_output": 128,
-            "out": [
+            "name":"inception_3a/3x3",
+            "num_output":128,
+            "out":[
                 "inception_3a/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_3a/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3a/relu_3x3",
+            "out":[
                 "inception_3a/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool2/3x3_s2"
             ],
-            "name": "inception_3a/5x5_reduce",
-            "num_output": 16,
-            "out": [
+            "name":"inception_3a/5x5_reduce",
+            "num_output":16,
+            "out":[
                 "inception_3a/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_3a/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3a/relu_5x5_reduce",
+            "out":[
                 "inception_3a/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3a/5x5_reduce"
             ],
-            "name": "inception_3a/5x5",
-            "num_output": 32,
-            "out": [
+            "name":"inception_3a/5x5",
+            "num_output":32,
+            "out":[
                 "inception_3a/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_3a/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3a/relu_5x5",
+            "out":[
                 "inception_3a/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "pool2/3x3_s2"
             ],
-            "mode": "max",
-            "name": "inception_3a/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_3a/pool",
+            "out":[
                 "inception_3a/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3a/pool"
             ],
-            "name": "inception_3a/pool_proj",
-            "num_output": 32,
-            "out": [
+            "name":"inception_3a/pool_proj",
+            "num_output":32,
+            "out":[
                 "inception_3a/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_3a/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3a/relu_pool_proj",
+            "out":[
                 "inception_3a/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/1x1",
                 "inception_3a/3x3",
                 "inception_3a/5x5",
                 "inception_3a/pool_proj"
             ],
-            "name": "inception_3a/output",
-            "out": [
+            "name":"inception_3a/output",
+            "out":[
                 "inception_3a/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3a/output"
             ],
-            "name": "inception_3b/1x1",
-            "num_output": 128,
-            "out": [
+            "name":"inception_3b/1x1",
+            "num_output":128,
+            "out":[
                 "inception_3b/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_3b/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3b/relu_1x1",
+            "out":[
                 "inception_3b/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3a/output"
             ],
-            "name": "inception_3b/3x3_reduce",
-            "num_output": 128,
-            "out": [
+            "name":"inception_3b/3x3_reduce",
+            "num_output":128,
+            "out":[
                 "inception_3b/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_3b/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3b/relu_3x3_reduce",
+            "out":[
                 "inception_3b/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3b/3x3_reduce"
             ],
-            "name": "inception_3b/3x3",
-            "num_output": 192,
-            "out": [
+            "name":"inception_3b/3x3",
+            "num_output":192,
+            "out":[
                 "inception_3b/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_3b/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3b/relu_3x3",
+            "out":[
                 "inception_3b/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3a/output"
             ],
-            "name": "inception_3b/5x5_reduce",
-            "num_output": 32,
-            "out": [
+            "name":"inception_3b/5x5_reduce",
+            "num_output":32,
+            "out":[
                 "inception_3b/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_3b/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3b/relu_5x5_reduce",
+            "out":[
                 "inception_3b/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3b/5x5_reduce"
             ],
-            "name": "inception_3b/5x5",
-            "num_output": 96,
-            "out": [
+            "name":"inception_3b/5x5",
+            "num_output":96,
+            "out":[
                 "inception_3b/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_3b/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3b/relu_5x5",
+            "out":[
                 "inception_3b/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_3a/output"
             ],
-            "mode": "max",
-            "name": "inception_3b/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_3b/pool",
+            "out":[
                 "inception_3b/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_3b/pool"
             ],
-            "name": "inception_3b/pool_proj",
-            "num_output": 64,
-            "out": [
+            "name":"inception_3b/pool_proj",
+            "num_output":64,
+            "out":[
                 "inception_3b/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_3b/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_3b/relu_pool_proj",
+            "out":[
                 "inception_3b/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/1x1",
                 "inception_3b/3x3",
                 "inception_3b/5x5",
                 "inception_3b/pool_proj"
             ],
-            "name": "inception_3b/output",
-            "out": [
+            "name":"inception_3b/output",
+            "out":[
                 "inception_3b/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "in": [
+            "in":[
                 "inception_3b/output"
             ],
-            "mode": "max",
-            "name": "pool3/3x3_s2",
-            "out": [
+            "mode":"max",
+            "name":"pool3/3x3_s2",
+            "out":[
                 "pool3/3x3_s2"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 2,
                 2
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool3/3x3_s2"
             ],
-            "name": "inception_4a/1x1",
-            "num_output": 192,
-            "out": [
+            "name":"inception_4a/1x1",
+            "num_output":192,
+            "out":[
                 "inception_4a/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_4a/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4a/relu_1x1",
+            "out":[
                 "inception_4a/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool3/3x3_s2"
             ],
-            "name": "inception_4a/3x3_reduce",
-            "num_output": 96,
-            "out": [
+            "name":"inception_4a/3x3_reduce",
+            "num_output":96,
+            "out":[
                 "inception_4a/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4a/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4a/relu_3x3_reduce",
+            "out":[
                 "inception_4a/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4a/3x3_reduce"
             ],
-            "name": "inception_4a/3x3",
-            "num_output": 208,
-            "out": [
+            "name":"inception_4a/3x3",
+            "num_output":208,
+            "out":[
                 "inception_4a/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_4a/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4a/relu_3x3",
+            "out":[
                 "inception_4a/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool3/3x3_s2"
             ],
-            "name": "inception_4a/5x5_reduce",
-            "num_output": 16,
-            "out": [
+            "name":"inception_4a/5x5_reduce",
+            "num_output":16,
+            "out":[
                 "inception_4a/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4a/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4a/relu_5x5_reduce",
+            "out":[
                 "inception_4a/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4a/5x5_reduce"
             ],
-            "name": "inception_4a/5x5",
-            "num_output": 48,
-            "out": [
+            "name":"inception_4a/5x5",
+            "num_output":48,
+            "out":[
                 "inception_4a/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_4a/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4a/relu_5x5",
+            "out":[
                 "inception_4a/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "pool3/3x3_s2"
             ],
-            "mode": "max",
-            "name": "inception_4a/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_4a/pool",
+            "out":[
                 "inception_4a/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4a/pool"
             ],
-            "name": "inception_4a/pool_proj",
-            "num_output": 64,
-            "out": [
+            "name":"inception_4a/pool_proj",
+            "num_output":64,
+            "out":[
                 "inception_4a/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_4a/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4a/relu_pool_proj",
+            "out":[
                 "inception_4a/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/1x1",
                 "inception_4a/3x3",
                 "inception_4a/5x5",
                 "inception_4a/pool_proj"
             ],
-            "name": "inception_4a/output",
-            "out": [
+            "name":"inception_4a/output",
+            "out":[
                 "inception_4a/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/output"
             ],
-            "mode": "average_include",
-            "name": "loss1/ave_pool",
-            "out": [
+            "mode":"average_include",
+            "name":"loss1/ave_pool",
+            "out":[
                 "loss1/ave_pool"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 3,
                 3
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "loss1/ave_pool"
             ],
-            "name": "loss1/conv",
-            "num_output": 128,
-            "out": [
+            "name":"loss1/conv",
+            "num_output":128,
+            "out":[
                 "loss1/conv"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "loss1/conv"
             ],
-            "mode": "ReLU",
-            "name": "loss1/relu_conv",
-            "out": [
+            "mode":"ReLU",
+            "name":"loss1/relu_conv",
+            "out":[
                 "loss1/conv"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "loss1/conv"
             ],
-            "name": "loss1/fc",
-            "num_output": 1024,
-            "out": [
+            "name":"loss1/fc",
+            "num_output":1024,
+            "out":[
                 "loss1/fc"
             ],
-            "type": "InnerProduct",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0
+            "type":"InnerProduct",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0
         },
         {
-            "in": [
+            "in":[
                 "loss1/fc"
             ],
-            "mode": "ReLU",
-            "name": "loss1/relu_fc",
-            "out": [
+            "mode":"ReLU",
+            "name":"loss1/relu_fc",
+            "out":[
                 "loss1/fc"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "dropout_ratio": 0.7,
-            "in": [
+            "dropout_ratio":0.7,
+            "in":[
                 "loss1/fc"
             ],
-            "name": "loss1/drop_fc",
-            "out": [
+            "name":"loss1/drop_fc",
+            "out":[
                 "loss1/fc"
             ],
-            "type": "Dropout"
+            "type":"Dropout"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.0,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.0,
+            "bias_lr_mult":2.0,
+            "in":[
                 "loss1/fc"
             ],
-            "name": "loss1/classifier",
-            "num_output": 1000,
-            "out": [
+            "name":"loss1/classifier",
+            "num_output":1000,
+            "out":[
                 "loss1/classifier"
             ],
-            "type": "InnerProduct",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0
+            "type":"InnerProduct",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0
         },
         {
-            "in": [
+            "in":[
                 "loss1/classifier"
             ],
-            "name": "loss1/loss",
-            "out": [
+            "name":"loss1/loss",
+            "out":[
                 "loss1/loss1"
             ],
-            "stable_gradient": true,
-            "type": "Softmax"
+            "stable_gradient":true,
+            "type":"Softmax"
         },
         {
-            "in": [
+            "in":[
                 "loss1/loss1",
                 "label"
             ],
-            "loss_weight": 0.3,
-            "mode": "MultinomialLogistic_StableSoftmax",
-            "name": "loss1/loss_loss",
-            "stable_gradient": true,
-            "type": "Loss"
+            "loss_weight":0.3,
+            "mode":"MultinomialLogistic_StableSoftmax",
+            "name":"loss1/loss_loss",
+            "stable_gradient":true,
+            "type":"Loss"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4a/output"
             ],
-            "name": "inception_4b/1x1",
-            "num_output": 160,
-            "out": [
+            "name":"inception_4b/1x1",
+            "num_output":160,
+            "out":[
                 "inception_4b/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_4b/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4b/relu_1x1",
+            "out":[
                 "inception_4b/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4a/output"
             ],
-            "name": "inception_4b/3x3_reduce",
-            "num_output": 112,
-            "out": [
+            "name":"inception_4b/3x3_reduce",
+            "num_output":112,
+            "out":[
                 "inception_4b/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4b/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4b/relu_3x3_reduce",
+            "out":[
                 "inception_4b/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4b/3x3_reduce"
             ],
-            "name": "inception_4b/3x3",
-            "num_output": 224,
-            "out": [
+            "name":"inception_4b/3x3",
+            "num_output":224,
+            "out":[
                 "inception_4b/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_4b/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4b/relu_3x3",
+            "out":[
                 "inception_4b/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4a/output"
             ],
-            "name": "inception_4b/5x5_reduce",
-            "num_output": 24,
-            "out": [
+            "name":"inception_4b/5x5_reduce",
+            "num_output":24,
+            "out":[
                 "inception_4b/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4b/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4b/relu_5x5_reduce",
+            "out":[
                 "inception_4b/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4b/5x5_reduce"
             ],
-            "name": "inception_4b/5x5",
-            "num_output": 64,
-            "out": [
+            "name":"inception_4b/5x5",
+            "num_output":64,
+            "out":[
                 "inception_4b/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_4b/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4b/relu_5x5",
+            "out":[
                 "inception_4b/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4a/output"
             ],
-            "mode": "max",
-            "name": "inception_4b/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_4b/pool",
+            "out":[
                 "inception_4b/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4b/pool"
             ],
-            "name": "inception_4b/pool_proj",
-            "num_output": 64,
-            "out": [
+            "name":"inception_4b/pool_proj",
+            "num_output":64,
+            "out":[
                 "inception_4b/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_4b/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4b/relu_pool_proj",
+            "out":[
                 "inception_4b/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/1x1",
                 "inception_4b/3x3",
                 "inception_4b/5x5",
                 "inception_4b/pool_proj"
             ],
-            "name": "inception_4b/output",
-            "out": [
+            "name":"inception_4b/output",
+            "out":[
                 "inception_4b/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4b/output"
             ],
-            "name": "inception_4c/1x1",
-            "num_output": 128,
-            "out": [
+            "name":"inception_4c/1x1",
+            "num_output":128,
+            "out":[
                 "inception_4c/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_4c/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4c/relu_1x1",
+            "out":[
                 "inception_4c/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4b/output"
             ],
-            "name": "inception_4c/3x3_reduce",
-            "num_output": 128,
-            "out": [
+            "name":"inception_4c/3x3_reduce",
+            "num_output":128,
+            "out":[
                 "inception_4c/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4c/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4c/relu_3x3_reduce",
+            "out":[
                 "inception_4c/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4c/3x3_reduce"
             ],
-            "name": "inception_4c/3x3",
-            "num_output": 256,
-            "out": [
+            "name":"inception_4c/3x3",
+            "num_output":256,
+            "out":[
                 "inception_4c/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_4c/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4c/relu_3x3",
+            "out":[
                 "inception_4c/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4b/output"
             ],
-            "name": "inception_4c/5x5_reduce",
-            "num_output": 24,
-            "out": [
+            "name":"inception_4c/5x5_reduce",
+            "num_output":24,
+            "out":[
                 "inception_4c/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4c/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4c/relu_5x5_reduce",
+            "out":[
                 "inception_4c/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4c/5x5_reduce"
             ],
-            "name": "inception_4c/5x5",
-            "num_output": 64,
-            "out": [
+            "name":"inception_4c/5x5",
+            "num_output":64,
+            "out":[
                 "inception_4c/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_4c/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4c/relu_5x5",
+            "out":[
                 "inception_4c/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4b/output"
             ],
-            "mode": "max",
-            "name": "inception_4c/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_4c/pool",
+            "out":[
                 "inception_4c/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4c/pool"
             ],
-            "name": "inception_4c/pool_proj",
-            "num_output": 64,
-            "out": [
+            "name":"inception_4c/pool_proj",
+            "num_output":64,
+            "out":[
                 "inception_4c/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_4c/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4c/relu_pool_proj",
+            "out":[
                 "inception_4c/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/1x1",
                 "inception_4c/3x3",
                 "inception_4c/5x5",
                 "inception_4c/pool_proj"
             ],
-            "name": "inception_4c/output",
-            "out": [
+            "name":"inception_4c/output",
+            "out":[
                 "inception_4c/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4c/output"
             ],
-            "name": "inception_4d/1x1",
-            "num_output": 112,
-            "out": [
+            "name":"inception_4d/1x1",
+            "num_output":112,
+            "out":[
                 "inception_4d/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_4d/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4d/relu_1x1",
+            "out":[
                 "inception_4d/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4c/output"
             ],
-            "name": "inception_4d/3x3_reduce",
-            "num_output": 144,
-            "out": [
+            "name":"inception_4d/3x3_reduce",
+            "num_output":144,
+            "out":[
                 "inception_4d/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4d/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4d/relu_3x3_reduce",
+            "out":[
                 "inception_4d/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4d/3x3_reduce"
             ],
-            "name": "inception_4d/3x3",
-            "num_output": 288,
-            "out": [
+            "name":"inception_4d/3x3",
+            "num_output":288,
+            "out":[
                 "inception_4d/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_4d/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4d/relu_3x3",
+            "out":[
                 "inception_4d/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4c/output"
             ],
-            "name": "inception_4d/5x5_reduce",
-            "num_output": 32,
-            "out": [
+            "name":"inception_4d/5x5_reduce",
+            "num_output":32,
+            "out":[
                 "inception_4d/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4d/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4d/relu_5x5_reduce",
+            "out":[
                 "inception_4d/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4d/5x5_reduce"
             ],
-            "name": "inception_4d/5x5",
-            "num_output": 64,
-            "out": [
+            "name":"inception_4d/5x5",
+            "num_output":64,
+            "out":[
                 "inception_4d/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_4d/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4d/relu_5x5",
+            "out":[
                 "inception_4d/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4c/output"
             ],
-            "mode": "max",
-            "name": "inception_4d/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_4d/pool",
+            "out":[
                 "inception_4d/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4d/pool"
             ],
-            "name": "inception_4d/pool_proj",
-            "num_output": 64,
-            "out": [
+            "name":"inception_4d/pool_proj",
+            "num_output":64,
+            "out":[
                 "inception_4d/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_4d/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4d/relu_pool_proj",
+            "out":[
                 "inception_4d/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/1x1",
                 "inception_4d/3x3",
                 "inception_4d/5x5",
                 "inception_4d/pool_proj"
             ],
-            "name": "inception_4d/output",
-            "out": [
+            "name":"inception_4d/output",
+            "out":[
                 "inception_4d/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/output"
             ],
-            "mode": "average_include",
-            "name": "loss2/ave_pool",
-            "out": [
+            "mode":"average_include",
+            "name":"loss2/ave_pool",
+            "out":[
                 "loss2/ave_pool"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 3,
                 3
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "loss2/ave_pool"
             ],
-            "name": "loss2/conv",
-            "num_output": 128,
-            "out": [
+            "name":"loss2/conv",
+            "num_output":128,
+            "out":[
                 "loss2/conv"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "loss2/conv"
             ],
-            "mode": "ReLU",
-            "name": "loss2/relu_conv",
-            "out": [
+            "mode":"ReLU",
+            "name":"loss2/relu_conv",
+            "out":[
                 "loss2/conv"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "loss2/conv"
             ],
-            "name": "loss2/fc",
-            "num_output": 1024,
-            "out": [
+            "name":"loss2/fc",
+            "num_output":1024,
+            "out":[
                 "loss2/fc"
             ],
-            "type": "InnerProduct",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0
+            "type":"InnerProduct",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0
         },
         {
-            "in": [
+            "in":[
                 "loss2/fc"
             ],
-            "mode": "ReLU",
-            "name": "loss2/relu_fc",
-            "out": [
+            "mode":"ReLU",
+            "name":"loss2/relu_fc",
+            "out":[
                 "loss2/fc"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "dropout_ratio": 0.7,
-            "in": [
+            "dropout_ratio":0.7,
+            "in":[
                 "loss2/fc"
             ],
-            "name": "loss2/drop_fc",
-            "out": [
+            "name":"loss2/drop_fc",
+            "out":[
                 "loss2/fc"
             ],
-            "type": "Dropout"
+            "type":"Dropout"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.0,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.0,
+            "bias_lr_mult":2.0,
+            "in":[
                 "loss2/fc"
             ],
-            "name": "loss2/classifier",
-            "num_output": 1000,
-            "out": [
+            "name":"loss2/classifier",
+            "num_output":1000,
+            "out":[
                 "loss2/classifier"
             ],
-            "type": "InnerProduct",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0
+            "type":"InnerProduct",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0
         },
         {
-            "in": [
+            "in":[
                 "loss2/classifier"
             ],
-            "name": "loss2/loss",
-            "out": [
+            "name":"loss2/loss",
+            "out":[
                 "loss2/loss1"
             ],
-            "stable_gradient": true,
-            "type": "Softmax"
+            "stable_gradient":true,
+            "type":"Softmax"
         },
         {
-            "in": [
+            "in":[
                 "loss2/loss1",
                 "label"
             ],
-            "loss_weight": 0.3,
-            "mode": "MultinomialLogistic_StableSoftmax",
-            "name": "loss2/loss_loss",
-            "stable_gradient": true,
-            "type": "Loss"
+            "loss_weight":0.3,
+            "mode":"MultinomialLogistic_StableSoftmax",
+            "name":"loss2/loss_loss",
+            "stable_gradient":true,
+            "type":"Loss"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4d/output"
             ],
-            "name": "inception_4e/1x1",
-            "num_output": 256,
-            "out": [
+            "name":"inception_4e/1x1",
+            "num_output":256,
+            "out":[
                 "inception_4e/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_4e/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4e/relu_1x1",
+            "out":[
                 "inception_4e/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4d/output"
             ],
-            "name": "inception_4e/3x3_reduce",
-            "num_output": 160,
-            "out": [
+            "name":"inception_4e/3x3_reduce",
+            "num_output":160,
+            "out":[
                 "inception_4e/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4e/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4e/relu_3x3_reduce",
+            "out":[
                 "inception_4e/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4e/3x3_reduce"
             ],
-            "name": "inception_4e/3x3",
-            "num_output": 320,
-            "out": [
+            "name":"inception_4e/3x3",
+            "num_output":320,
+            "out":[
                 "inception_4e/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_4e/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4e/relu_3x3",
+            "out":[
                 "inception_4e/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4d/output"
             ],
-            "name": "inception_4e/5x5_reduce",
-            "num_output": 32,
-            "out": [
+            "name":"inception_4e/5x5_reduce",
+            "num_output":32,
+            "out":[
                 "inception_4e/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_4e/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4e/relu_5x5_reduce",
+            "out":[
                 "inception_4e/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4e/5x5_reduce"
             ],
-            "name": "inception_4e/5x5",
-            "num_output": 128,
-            "out": [
+            "name":"inception_4e/5x5",
+            "num_output":128,
+            "out":[
                 "inception_4e/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_4e/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4e/relu_5x5",
+            "out":[
                 "inception_4e/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4d/output"
             ],
-            "mode": "max",
-            "name": "inception_4e/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_4e/pool",
+            "out":[
                 "inception_4e/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_4e/pool"
             ],
-            "name": "inception_4e/pool_proj",
-            "num_output": 128,
-            "out": [
+            "name":"inception_4e/pool_proj",
+            "num_output":128,
+            "out":[
                 "inception_4e/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_4e/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_4e/relu_pool_proj",
+            "out":[
                 "inception_4e/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/1x1",
                 "inception_4e/3x3",
                 "inception_4e/5x5",
                 "inception_4e/pool_proj"
             ],
-            "name": "inception_4e/output",
-            "out": [
+            "name":"inception_4e/output",
+            "out":[
                 "inception_4e/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "in": [
+            "in":[
                 "inception_4e/output"
             ],
-            "mode": "max",
-            "name": "pool4/3x3_s2",
-            "out": [
+            "mode":"max",
+            "name":"pool4/3x3_s2",
+            "out":[
                 "pool4/3x3_s2"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 2,
                 2
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool4/3x3_s2"
             ],
-            "name": "inception_5a/1x1",
-            "num_output": 256,
-            "out": [
+            "name":"inception_5a/1x1",
+            "num_output":256,
+            "out":[
                 "inception_5a/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_5a/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5a/relu_1x1",
+            "out":[
                 "inception_5a/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool4/3x3_s2"
             ],
-            "name": "inception_5a/3x3_reduce",
-            "num_output": 160,
-            "out": [
+            "name":"inception_5a/3x3_reduce",
+            "num_output":160,
+            "out":[
                 "inception_5a/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_5a/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5a/relu_3x3_reduce",
+            "out":[
                 "inception_5a/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5a/3x3_reduce"
             ],
-            "name": "inception_5a/3x3",
-            "num_output": 320,
-            "out": [
+            "name":"inception_5a/3x3",
+            "num_output":320,
+            "out":[
                 "inception_5a/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_5a/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5a/relu_3x3",
+            "out":[
                 "inception_5a/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool4/3x3_s2"
             ],
-            "name": "inception_5a/5x5_reduce",
-            "num_output": 32,
-            "out": [
+            "name":"inception_5a/5x5_reduce",
+            "num_output":32,
+            "out":[
                 "inception_5a/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_5a/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5a/relu_5x5_reduce",
+            "out":[
                 "inception_5a/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5a/5x5_reduce"
             ],
-            "name": "inception_5a/5x5",
-            "num_output": 128,
-            "out": [
+            "name":"inception_5a/5x5",
+            "num_output":128,
+            "out":[
                 "inception_5a/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_5a/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5a/relu_5x5",
+            "out":[
                 "inception_5a/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "pool4/3x3_s2"
             ],
-            "mode": "max",
-            "name": "inception_5a/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_5a/pool",
+            "out":[
                 "inception_5a/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5a/pool"
             ],
-            "name": "inception_5a/pool_proj",
-            "num_output": 128,
-            "out": [
+            "name":"inception_5a/pool_proj",
+            "num_output":128,
+            "out":[
                 "inception_5a/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_5a/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5a/relu_pool_proj",
+            "out":[
                 "inception_5a/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/1x1",
                 "inception_5a/3x3",
                 "inception_5a/5x5",
                 "inception_5a/pool_proj"
             ],
-            "name": "inception_5a/output",
-            "out": [
+            "name":"inception_5a/output",
+            "out":[
                 "inception_5a/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5a/output"
             ],
-            "name": "inception_5b/1x1",
-            "num_output": 384,
-            "out": [
+            "name":"inception_5b/1x1",
+            "num_output":384,
+            "out":[
                 "inception_5b/1x1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/1x1"
             ],
-            "mode": "ReLU",
-            "name": "inception_5b/relu_1x1",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5b/relu_1x1",
+            "out":[
                 "inception_5b/1x1"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5a/output"
             ],
-            "name": "inception_5b/3x3_reduce",
-            "num_output": 192,
-            "out": [
+            "name":"inception_5b/3x3_reduce",
+            "num_output":192,
+            "out":[
                 "inception_5b/3x3_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/3x3_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_5b/relu_3x3_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5b/relu_3x3_reduce",
+            "out":[
                 "inception_5b/3x3_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5b/3x3_reduce"
             ],
-            "name": "inception_5b/3x3",
-            "num_output": 384,
-            "out": [
+            "name":"inception_5b/3x3",
+            "num_output":384,
+            "out":[
                 "inception_5b/3x3"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/3x3"
             ],
-            "mode": "ReLU",
-            "name": "inception_5b/relu_3x3",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5b/relu_3x3",
+            "out":[
                 "inception_5b/3x3"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5a/output"
             ],
-            "name": "inception_5b/5x5_reduce",
-            "num_output": 48,
-            "out": [
+            "name":"inception_5b/5x5_reduce",
+            "num_output":48,
+            "out":[
                 "inception_5b/5x5_reduce"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/5x5_reduce"
             ],
-            "mode": "ReLU",
-            "name": "inception_5b/relu_5x5_reduce",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5b/relu_5x5_reduce",
+            "out":[
                 "inception_5b/5x5_reduce"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5b/5x5_reduce"
             ],
-            "name": "inception_5b/5x5",
-            "num_output": 128,
-            "out": [
+            "name":"inception_5b/5x5",
+            "num_output":128,
+            "out":[
                 "inception_5b/5x5"
             ],
-            "padding": [
+            "padding":[
                 2,
                 2
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 5,
                 5
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/5x5"
             ],
-            "mode": "ReLU",
-            "name": "inception_5b/relu_5x5",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5b/relu_5x5",
+            "out":[
                 "inception_5b/5x5"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_5a/output"
             ],
-            "mode": "max",
-            "name": "inception_5b/pool",
-            "out": [
+            "mode":"max",
+            "name":"inception_5b/pool",
+            "out":[
                 "inception_5b/pool"
             ],
-            "padding": [
+            "padding":[
                 1,
                 1
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 3,
                 3
             ]
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.2,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.2,
+            "bias_lr_mult":2.0,
+            "in":[
                 "inception_5b/pool"
             ],
-            "name": "inception_5b/pool_proj",
-            "num_output": 128,
-            "out": [
+            "name":"inception_5b/pool_proj",
+            "num_output":128,
+            "out":[
                 "inception_5b/pool_proj"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Convolution",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0,
-            "window": [
+            "type":"Convolution",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0,
+            "window":[
                 1,
                 1
             ]
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/pool_proj"
             ],
-            "mode": "ReLU",
-            "name": "inception_5b/relu_pool_proj",
-            "out": [
+            "mode":"ReLU",
+            "name":"inception_5b/relu_pool_proj",
+            "out":[
                 "inception_5b/pool_proj"
             ],
-            "type": "Activation"
+            "type":"Activation"
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/1x1",
                 "inception_5b/3x3",
                 "inception_5b/5x5",
                 "inception_5b/pool_proj"
             ],
-            "name": "inception_5b/output",
-            "out": [
+            "name":"inception_5b/output",
+            "out":[
                 "inception_5b/output"
             ],
-            "type": "Concat"
+            "type":"Concat"
         },
         {
-            "in": [
+            "in":[
                 "inception_5b/output"
             ],
-            "mode": "average_include",
-            "name": "pool5/7x7_s1",
-            "out": [
+            "mode":"average_include",
+            "name":"pool5/7x7_s1",
+            "out":[
                 "pool5/7x7_s1"
             ],
-            "padding": [
+            "padding":[
                 0,
                 0
             ],
-            "stride": [
+            "stride":[
                 1,
                 1
             ],
-            "type": "Pooling",
-            "window": [
+            "type":"Pooling",
+            "window":[
                 7,
                 7
             ]
         },
         {
-            "dropout_ratio": 0.4,
-            "in": [
+            "dropout_ratio":0.4,
+            "in":[
                 "pool5/7x7_s1"
             ],
-            "name": "pool5/drop_7x7_s1",
-            "out": [
+            "name":"pool5/drop_7x7_s1",
+            "out":[
                 "pool5/7x7_s1"
             ],
-            "type": "Dropout"
+            "type":"Dropout"
         },
         {
-            "bias_decay_mult": 0.0,
-            "bias_filler": "Constant",
-            "bias_filler_param": 0.0,
-            "bias_lr_mult": 2.0,
-            "in": [
+            "bias_decay_mult":0.0,
+            "bias_filler":"Constant",
+            "bias_filler_param":0.0,
+            "bias_lr_mult":2.0,
+            "in":[
                 "pool5/7x7_s1"
             ],
-            "name": "loss3/classifier",
-            "num_output": 1000,
-            "out": [
+            "name":"loss3/classifier",
+            "num_output":1000,
+            "out":[
                 "loss3/classifier"
             ],
-            "type": "InnerProduct",
-            "weight_decay_mult": 1.0,
-            "weight_filler": "Xavier",
-            "weight_filler_param": 0,
-            "weight_lr_mult": 1.0
+            "type":"InnerProduct",
+            "weight_decay_mult":1.0,
+            "weight_filler":"Xavier",
+            "weight_filler_param":0,
+            "weight_lr_mult":1.0
         },
         {
-            "in": [
+            "in":[
                 "loss3/classifier"
             ],
-            "name": "loss3/loss3",
-            "out": [
+            "name":"loss3/loss3",
+            "out":[
                 "loss3/loss3"
             ],
-            "stable_gradient": true,
-            "type": "Softmax"
+            "stable_gradient":true,
+            "type":"Softmax"
         },
         {
-            "in": [
+            "in":[
                 "loss3/loss3",
                 "label"
             ],
-            "loss_weight": 1.0,
-            "mode": "MultinomialLogistic_StableSoftmax",
-            "name": "loss3/loss3_loss",
-            "stable_gradient": true,
-            "type": "Loss"
+            "loss_weight":1.0,
+            "mode":"MultinomialLogistic_StableSoftmax",
+            "name":"loss3/loss3_loss",
+            "stable_gradient":true,
+            "type":"Loss"
         }
-	]
+    ]
 }
