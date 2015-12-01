@@ -29,3 +29,6 @@ mv PrincetonVision* marvin && cd marvin
 1. Prepare data: run [```examples/mnist/prepare_mnist.m```](https://github.com/PrincetonVision/marvin/blob/master/examples/mnist/prepare_mnist.m) in ```MATLAB```
 2. Train a model: run [```examples/mnist/demo.sh```](https://github.com/PrincetonVision/marvin/blob/master/examples/mnist/demo.sh) in ```shell```
 3. Visualize filters: run [```examples/mnist/demo_vis_filter.m```](https://github.com/PrincetonVision/marvin/blob/master/examples/mnist/demo_vis_filter.m) in ```MATLAB```
+
+<br>
+Ready for a more advanced [demo](https://github.com/PrincetonVision/marvin/tree/master/examples/classification)?
