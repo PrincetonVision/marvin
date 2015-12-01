@@ -5,9 +5,6 @@
  * ----------------------------------------------------------------------------
  */
 
-// Please choose a data type to compile
-#define DATATYPE 0
-
 #if DATATYPE==0
     #pragma message "Compiling using StorageT=half ComputeT=float"
     #define StorageT half

@@ -1,3 +1,5 @@
+// Please choose a data type to compile
+#define DATATYPE 0
 #include "marvin.hpp"
 
 using namespace marvin;
