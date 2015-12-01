@@ -14,7 +14,7 @@ Marvin's life depends on an NVIDIA GPU with [CUDA 7.5](http://lmgtfy.com/?q=inst
 #### 2. Grab him from the cloud
 
 {% highlight bash %}
-curl -L https://github.com/PrincetonVision/marvin/tarball/master | tar x
+curl -L https://github.com/PrincetonVision/marvin/tarball/master | tar zx
 mv PrincetonVision* marvin && cd marvin
 {% endhighlight %}
 
