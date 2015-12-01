@@ -28,4 +28,10 @@ demo('vgg', 'imagenet', '16') # VGG with 16 layers
 demo('vgg', 'imagenet', '19') # VGG with 19 layers
 ```
 
+Run demos on places dataset:
+```
+demo('alexnet', 'places')
+demo('googlenet', 'places')
+```
+
 To run these commands, you have to download the corresponding model weights first.
