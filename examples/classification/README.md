@@ -1,18 +1,22 @@
 Use pre-trained models to classify a picture of a cat. MARVIN_ROOT is where the marvin code is where the Marvin code resides. For AlexNet pre-trained on the ImageNet dataset:
 
 1. Compile Marvin
+
   ```
   $(MARVIN_ROOT)/compile.sh
   ```
 2. Download model weights
+
   ```
   bash $(MARVIN_ROOT)/models/alexnet_imagenet/download_weights.sh
   ```
 3. Download dataset mean image
+
   ```
   bash $(MARVIN_ROOT)/data/imagenet/download.sh
   ```
 4. Run demo.m
+
   ```
   cd $(MARVIN_ROOT)/examples/imagenet
   matlab
