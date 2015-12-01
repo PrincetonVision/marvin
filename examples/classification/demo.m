@@ -32,12 +32,29 @@ switch net_name
         error('Unknown net name %s', net_name);
 end
 
+switch data_name
+    case 'imagenet'
+        class_names = load('ImageNetclass.mat');
+        class_names = class_names.ImageNetclass;
+    case 'places'
+        class_names = load('PLACE205_label');
+        class_names = class_names.category_name;
+    otherwise
+        error('Unknown data: %s', data_name);
+end
+
 train_data_path = fullfile(marvin_root, 'data', data_name, 'train_data.tensor');
 train_label_path = fullfile(marvin_root, 'data', data_name, 'train_label.tensor');
 val_data_path = fullfile(marvin_root, 'data', data_name, 'val_data.tensor');
 val_label_path = fullfile(marvin_root, 'data', data_name, 'val_label.tensor');
 
-im = imread(fullfile(marvin_root, 'data', 'images', 'cat.jpg'));
+switch data_name
+    case 'imagenet'
+        im = imread(fullfile(marvin_root, 'data', 'images', 'cat.jpg'));
+    case 'places'
+        im = imread(fullfile(marvin_root, 'data', 'images', 'bedroom.jpg'));
+end
+
 im = imresize(im,[scale(1),scale(2)]);
 im = single(im(:,:,[3 2 1]));
 % save as tensor 
@@ -64,20 +81,20 @@ writeTensors(train_label_path, label_tensor);
 writeTensors(val_label_path, label_tensor);
 
 %% run marvin test
-template = './marvin test %s %s %s examples/imagenet/cls_prob_0';
+template = './marvin test %s %s %s examples/classification/cls_prob_0';
 cmd = sprintf(template, model_path, pretrained_path, last_layer);   
 system(sprintf('cd %s; export LD_LIBRARY_PATH=LD_LIBRARY_PATH:/usr/local/cuda/lib64; %s', marvin_root, cmd));
 
 %% show result
-load('ImageNetclass.mat')
 result = readTensors('cls_prob_0');
 conf = result.value(:,:,:,2);
 conf = conf(:);
 [~, maxidx]=sort(conf,'descend');
+
 fprintf('\n=========================\n\n')
 fprintf('Top 5 results \n')
 for ii = 1:5
-    fprintf('%d: class %d %s\n', ii, maxidx(ii), ImageNetclass{maxidx(ii)})
+    fprintf('%d: class %d %s\n', ii, maxidx(ii), class_names{maxidx(ii)})
 end
 
 %% delete
