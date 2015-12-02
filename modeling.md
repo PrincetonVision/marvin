@@ -15,12 +15,12 @@ You can find a number of demos showing how to download and run the models below 
 	The List
 </h3>
 
-This list contains links to architecture definitions (```*.json```), download scripts for datasets (```*.tensor```), and pre-trained weights (```*.marvin```). We have also taken care to give credit where it is due, so please let us know if there is anything wrong or missing.
+This list contains links to architecture definitions (```*.json```), download scripts for the mean images (```*.tensor```), and pre-trained weights (```*.marvin```). We have also taken care to give credit where it is due, so please let us know if there is anything wrong or missing.
 
 <table align='left'>
 	<tr>
 		<th>Architecture</th>
-		<th>Dataset</th>
+		<th>Mean image</th>
 		<th>Weights</th>
 		<th>Trainer</th>
 		<th>Citation</th>
