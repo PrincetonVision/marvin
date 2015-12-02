@@ -7,9 +7,9 @@ title: Models
   Pre-trained Models
 </h2>
 
-We provide a number of pre-trained models for easy use. When using these models, please cite and heed licenses accordingly!
+We provide a number of pre-trained models for easy use. When using these models, please cite and heed licenses accordingly! We also welcome community contributions via pull requests to the <a href='https://github.com/PrincetonVision/marvin'>repository</a>.
 
-We also welcome community contributions via pull requests to the <a href='https://github.com/PrincetonVision/marvin'>repository</a>.
+You can find a number of demos showing how to download and run the models below <a href='https://github.com/PrincetonVision/marvin/tree/master/examples/classification'>here</a>.
 
 <h3>
 	The List
