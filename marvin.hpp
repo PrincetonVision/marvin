@@ -5032,8 +5032,8 @@ public:
                                 // copy the n-th, all channesl, all spatal
                                 if (dataDim.size()==3){
                                     // convert k to sx and sy
-                                    int sx = receptive_offset[0] + k / features->dim[3];
-                                    int sy = receptive_offset[1] + k % features->dim[3];
+                                    int sx = receptive_offset[0] + k / features->dim[3] * receptive_gap[0];
+                                    int sy = receptive_offset[1] + k % features->dim[3] * receptive_gap[1];
 
                                     for (int ic=0;ic<dataDim[0];++ic){
                                         for(int x=0; x<dataDim[1];++x){
@@ -5049,9 +5049,9 @@ public:
 
                                 }else if (dataDim.size()==4){
                                     // convert k to sx and sy
-                                    int sx = receptive_offset[0] + k / (features->dim[3] * features->dim[4]);
-                                    int sy = receptive_offset[1] + (k / features->dim[4]) % features->dim[3];
-                                    int sz = receptive_offset[2] + k % features->dim[4];
+                                    int sx = receptive_offset[0] + k / (features->dim[3] * features->dim[4]) * receptive_gap[0];
+                                    int sy = receptive_offset[1] + (k / features->dim[4]) % features->dim[3] * receptive_gap[1];
+                                    int sz = receptive_offset[2] + k % features->dim[4] * receptive_gap[2];
 
                                     for (int ic=0;ic<dataDim[0];++ic){
                                         for(int x=0; x<dataDim[1];++x){
