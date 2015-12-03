@@ -3,3 +3,4 @@
 /marvin
 *.marvin
 *.tensor
+/build
