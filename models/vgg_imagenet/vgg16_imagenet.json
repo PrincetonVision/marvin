@@ -26,7 +26,7 @@
     },
     "layers":[  
         {  
-            "type":"DiskData",
+            "type":"MemoryData",
             "name":"dataTest",
             "phase":"Testing",
             "mirror":false,
