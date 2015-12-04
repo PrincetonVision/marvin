@@ -23,4 +23,4 @@ include_directories(${CUDA_INCLUDE_DIR} ${CUDNN_INCLUDE_DIR})
 link_directories(${CUDA_LIB_DIR} ${CUDNN_LIB_DIR})
 
 cuda_add_executable(marvin marvin.hpp marvin.cu)
-target_link_libraries(marvin cudart cublas cudnn)
+target_link_libraries(marvin pthread cudart cublas cudnn)
