@@ -2084,11 +2084,11 @@ public:
         size_t sizeofitem_ = sizeofitem();
         size_t nbBytes = sizeofitem_ * sizeof(T);
         T* CPUmemNew = new T[numel()];
+        memcpy(CPUmemNew, CPUmem, nbItems * nbBytes)
         for (size_t i=0;i<nbItems;++i){
-            memcpy(CPUmemNew+i*sizeofitem_, CPUmem+v[i]*sizeofitem_, nbBytes);
+            memcpy(CPUmem+i*sizeofitem_, CPUmemNew+v[i]*sizeofitem_, nbBytes);
         }
-        delete [] CPUmem;
-        CPUmem = CPUmemNew;
+        delete [] CPUmemNew;
     };
 
 
