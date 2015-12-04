@@ -2084,7 +2084,7 @@ public:
         size_t sizeofitem_ = sizeofitem();
         size_t nbBytes = sizeofitem_ * sizeof(T);
         T* CPUmemNew = new T[numel()];
-        memcpy(CPUmemNew, CPUmem, nbItems * nbBytes)
+        memcpy(CPUmemNew, CPUmem, nbItems * nbBytes);
         for (size_t i=0;i<nbItems;++i){
             memcpy(CPUmem+i*sizeofitem_, CPUmemNew+v[i]*sizeofitem_, nbBytes);
         }
