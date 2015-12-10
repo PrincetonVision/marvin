@@ -53,9 +53,9 @@
     #define ComputeT_MIN DBL_MIN
 #endif
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Includes
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <cstdlib>
 #include <cstdio>
@@ -81,9 +81,9 @@
 
 namespace marvin {
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Type definition
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum Filler { Xavier, Gaussian, Constant };
 enum Pool { Max, Average, Sum };
@@ -104,9 +104,9 @@ const void* zero = static_cast<void *>(&zeroval);
 const ComputeT* oneComputeT = &oneval;
 const ComputeT* zeroComputeT = &zeroval;
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Debugging utility
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FatalError(const int lineNumber=0) {
     std::cerr << "FatalError";
@@ -185,7 +185,7 @@ unsigned long long toc() {
     return delta;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // HALF computation ultility
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -206,9 +206,9 @@ half cpu_float2half(float f) {
         ret.x = 0x7fffU;
         return ret;
     }
-  
+
     sign = ((x >> 16) & 0x8000);
-  
+
     // Get rid of +Inf/-Inf, +0/-0.
     if (u > 0x477fefff) {
         ret.x = sign | 0x7c00U;
@@ -233,7 +233,7 @@ half cpu_float2half(float f) {
     lsb = (1 << shift);
     lsb_s1 = (lsb >> 1);
     lsb_m1 = (lsb - 1);
-  
+
     // Round to nearest even.
     remainder = (mantissa & lsb_m1);
     mantissa >>= shift;
@@ -243,9 +243,9 @@ half cpu_float2half(float f) {
             ++exponent;
             mantissa = 0;
         }
-    }  
+    }
 
-    ret.x = (sign | (exponent << 10) | mantissa);  
+    ret.x = (sign | (exponent << 10) | mantissa);
 
     return ret;
 }
@@ -289,9 +289,9 @@ std::ostream& operator<< (std::ostream& stream, const half& x) {
     return stream;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // JSON parser
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum JSONType { JSON_String, JSON_Bool, JSON_Null, JSON_Number, JSON_Object, JSON_ObjectArray};
 
@@ -317,7 +317,7 @@ public:
                     case JSON_Number:
                         delete ((ComputeT*)(array[i]));
                     break;
-                    case JSON_Object:                       
+                    case JSON_Object:
                     break;
                     case JSON_ObjectArray:
                         delete ((JSON*)(array[i]));
@@ -328,7 +328,7 @@ public:
         for (std::map<std::string, JSON*>::iterator it = member.begin(); it != member.end(); it++ ){
             if (it->second != NULL)
                 delete it->second;
-        }       
+        }
     };
 
     std::string returnString(){
@@ -362,7 +362,7 @@ public:
             v[i] = (ComputeT)(*((ComputeT*)(array[i])));
         }
         return v;
-    };  
+    };
 
     std::vector<std::string> returnStringVector(){
         if (type!=JSON_String) FatalError(__LINE__);
@@ -465,7 +465,7 @@ public:
         else if (0 == this->member[name]->returnString().compare("ElementWise_SUM"))        variable = ElementWise_SUM;
         else if (0 == this->member[name]->returnString().compare("ElementWise_MAX"))        variable = ElementWise_MAX;
         else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
-    };  
+    };
 
     void set(std::string name, Filler &variable, Filler default_value){
         if (this->member.find(name) == this->member.end())                              variable = default_value;
@@ -677,7 +677,7 @@ public:
                 else
                     break;
             }else if (input[0]=='['){
-                // assume no nested array               
+                // assume no nested array
                 input = input.substr(1);
                 e = input.find("]");
                 p = new JSON;
@@ -762,7 +762,7 @@ void parseNetworkJSON(std::string filename, JSON* train_obj, JSON* test_obj, JSO
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Utility
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -790,7 +790,7 @@ void memorySizePrint(size_t bytes){
 void veciPrint(const std::vector<int>& v){
     std::cout<<"["<<v.size()<<"]={";
     if (v.size()>0) std::cout<<v[0];
-    if (v.size()>1){    
+    if (v.size()>1){
         for (int i=1;i<v.size();++i){
             std::cout<<","<<v[i];
         }
@@ -801,7 +801,7 @@ void veciPrint(const std::vector<int>& v){
 void vecfPrint(const std::vector<ComputeT>& v){
     std::cout<<"[";
     if (v.size()>0) std::cout<<v[0];
-    if (v.size()>1){    
+    if (v.size()>1){
         for (int i=1;i<v.size();++i){
             std::cout<<","<<v[i];
         }
@@ -882,7 +882,7 @@ std::vector<std::vector<int> > getIntVectorVector(std::string input){
         else
             break;
     }
-    return ret; 
+    return ret;
 }
 
 size_t numel(const std::vector<int>& dim){
@@ -950,9 +950,9 @@ std::vector<size_t> sort_indexes(const std::vector<T> &v) {
     return idx;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // CUDA kernels
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #define CUDA_NUM_THREADS 512
@@ -968,176 +968,242 @@ inline size_t CUDA_GET_LOOPS(const size_t N) {
     return (N + total_threads -1)/ total_threads;
 }
 
-__global__ void Accuracy_MultinomialLogistic(size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN, const StorageT* pred, const StorageT* label, const StorageT* weight, const StorageT* weightTensor, StorageT* loss){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+__global__ void Accuracy_MultinomialLogistic(
+    size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN,
+    const StorageT *pred, const StorageT *label, const StorageT *weight,
+    const StorageT *weightTensor, StorageT *loss) {
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
         int l = int(GPUStorage2ComputeT(label[idx]));
-        int baseID = (idx/M) * C * M  + idx % M;
-        int elementID = baseID + l * M ;
+        int baseID = (idx / M) * C * M + idx % M;
+        int elementID = baseID + l * M;
         ComputeT prob = GPUStorage2ComputeT(pred[elementID]);
         loss[idx] = GPUCompute2StorageT(1);
-        for(int d=0;d<C;++d){
-            if (GPUStorage2ComputeT(pred[baseID + d * M])>prob){
-                loss[idx]= GPUCompute2StorageT(0);
+        for (int d = 0; d < C; ++d) {
+            if (GPUStorage2ComputeT(pred[baseID + d * M]) > prob) {
+                loss[idx] = GPUCompute2StorageT(0);
             }
         }
-        if (weight!=NULL){
-            loss[idx] =  GPUCompute2StorageT( GPUStorage2ComputeT(loss[idx]) * GPUStorage2ComputeT(weight[l]) );
+        if (weight != NULL) {
+            loss[idx] = GPUCompute2StorageT(GPUStorage2ComputeT(loss[idx]) *
+                                            GPUStorage2ComputeT(weight[l]));
         }
-        if (weightTensor!=NULL){
-            loss[idx] =  GPUCompute2StorageT( GPUStorage2ComputeT(loss[idx]) * GPUStorage2ComputeT(weightTensor[idx % wN]) );
+        if (weightTensor != NULL) {
+            loss[idx] = GPUCompute2StorageT(GPUStorage2ComputeT(loss[idx]) *
+                                            GPUStorage2ComputeT(
+                                                weightTensor[idx % wN]));
         }
     }
 }
 
-__global__ void Loss_MultinomialLogistic(size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN, const StorageT* pred, const StorageT* label, const StorageT* weight, const StorageT* weightTensor, StorageT* loss){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+__global__ void Loss_MultinomialLogistic(
+    size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN,
+    const StorageT* pred, const StorageT* label, const StorageT* weight,
+    const StorageT *weightTensor, StorageT *loss) {
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
         int l = int(GPUStorage2ComputeT(label[idx]));
         int offset = l * M + (idx % M);
-        int elementID = (idx/M) * C * M  + offset;
-        ComputeT prob = max( GPUStorage2ComputeT(pred[elementID]), ComputeT_MIN);
-        ComputeT res  = log(prob);
-        if (weight!=NULL)       res *= GPUStorage2ComputeT(weight[l]);
-        if (weightTensor!=NULL) res *= GPUStorage2ComputeT(weightTensor[elementID % wN]);
-        loss[idx] = GPUCompute2StorageT( res );
+        int elementID = (idx / M) * C * M + offset;
+        ComputeT prob = max(GPUStorage2ComputeT(pred[elementID]), ComputeT_MIN);
+        ComputeT res = log(prob);
+        if (weight != NULL) res *= GPUStorage2ComputeT(weight[l]);
+        if (weightTensor != NULL)
+            res *= GPUStorage2ComputeT(weightTensor[elementID % wN]);
+        loss[idx] = GPUCompute2StorageT(res);
     }
 }
 
-__global__ void LossGrad_MultinomialLogistic(size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN, ComputeT scale, const StorageT* pred, const StorageT* label, const StorageT* weight, const StorageT* weightTensor, StorageT* diff){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+__global__ void LossGrad_MultinomialLogistic(
+    size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN, ComputeT scale,
+    const StorageT *pred, const StorageT *label, const StorageT *weight,
+    const StorageT *weightTensor, StorageT *diff) {
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
         int l = int(GPUStorage2ComputeT(label[idx]));
         int offset = l * M + (idx % M);
-        int elementID = (idx/M) * C * M  + offset;
-        ComputeT prob = max( GPUStorage2ComputeT(pred[elementID]), ComputeT_MIN);
-        if (weight!=NULL)       scale *= GPUStorage2ComputeT(weight[l]);
-        if (weightTensor!=NULL) scale *= GPUStorage2ComputeT(weightTensor[elementID % wN]);
-        diff[elementID] = GPUCompute2StorageT( GPUStorage2ComputeT(diff[elementID]) + scale / prob );
+        int elementID = (idx / M) * C * M + offset;
+        ComputeT prob = max(GPUStorage2ComputeT(pred[elementID]), ComputeT_MIN);
+        if (weight != NULL) scale *= GPUStorage2ComputeT(weight[l]);
+        if (weightTensor != NULL)
+            scale *= GPUStorage2ComputeT(weightTensor[elementID % wN]);
+        diff[elementID] = GPUCompute2StorageT(
+            GPUStorage2ComputeT(diff[elementID]) + scale / prob);
     }
 }
 
 // for numerical stability: http://freemind.pluskid.org/machine-learning/softmax-vs-softmax-loss-numerical-stability/
-__global__ void LossGrad_MultinomialLogistic_StableSoftmax(size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN, ComputeT scale, const StorageT* pred, const StorageT* label, const StorageT* weight, const StorageT* weightTensor,  StorageT* diff){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+__global__ void LossGrad_MultinomialLogistic_StableSoftmax(
+    size_t CUDA_NUM_LOOPS, size_t N, int C, int M, size_t wN, ComputeT scale,
+    const StorageT *pred, const StorageT *label, const StorageT *weight,
+    const StorageT *weightTensor, StorageT *diff) {
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
         int l = int(GPUStorage2ComputeT(label[idx]));
         int modM = idx % M;
-        int baseID = (idx/M) * C * M  + modM;
-        int elementID = baseID + l * M ;
+        int baseID = (idx / M) * C * M + modM;
+        int elementID = baseID + l * M;
 
-        if (weight!=NULL){
+        if (weight != NULL) {
             scale *= GPUStorage2ComputeT(weight[l]);
         }
 
-        if (weightTensor==NULL){
-            for(int d=0;d<C;++d){
+        if (weightTensor == NULL) {
+            for (int d = 0; d < C; ++d) {
                 int k = baseID + d * M;
-                diff[k] = GPUCompute2StorageT(GPUStorage2ComputeT(diff[k]) + scale * GPUStorage2ComputeT(pred[k]));
+                diff[k] = GPUCompute2StorageT(GPUStorage2ComputeT(diff[k]) +
+                                              scale *
+                                              GPUStorage2ComputeT(pred[k]));
             }
-            diff[elementID] = GPUCompute2StorageT(GPUStorage2ComputeT(diff[elementID]) - scale);
-        }else{
-            for(int d=0;d<C;++d){
+            diff[elementID] = GPUCompute2StorageT(
+                GPUStorage2ComputeT(diff[elementID]) - scale);
+        } else {
+            for (int d = 0; d < C; ++d) {
                 int k = baseID + d * M;
-                diff[k] = GPUCompute2StorageT(GPUStorage2ComputeT(diff[k]) + scale * GPUStorage2ComputeT(pred[k]) * GPUStorage2ComputeT(weightTensor[k % wN]));
+                diff[k] = GPUCompute2StorageT(GPUStorage2ComputeT(diff[k]) +
+                                              scale *
+                                              GPUStorage2ComputeT(pred[k]) *
+                                              GPUStorage2ComputeT(
+                                                  weightTensor[k % wN]));
             }
-            diff[elementID] = GPUCompute2StorageT(GPUStorage2ComputeT(diff[elementID]) - scale * GPUStorage2ComputeT(weightTensor[elementID % wN]));
+            diff[elementID] = GPUCompute2StorageT(
+                GPUStorage2ComputeT(diff[elementID]) -
+                scale * GPUStorage2ComputeT(weightTensor[elementID % wN]));
         }
     }
 }
 
-__global__ void Loss_SmoothL1(size_t CUDA_NUM_LOOPS, size_t N, const StorageT* pred, const StorageT* target, const StorageT* weight, StorageT* loss){
-    // diff = f( weight * (pred - target) ) 
+__global__ void Loss_SmoothL1(size_t CUDA_NUM_LOOPS, size_t N,
+                              const StorageT *pred, const StorageT *target,
+                              const StorageT *weight, StorageT *loss) {
+    // diff = f( weight * (pred - target) )
     // f(x) = 0.5 * x^2    if |x| < 1
     //        |x| - 0.5    otherwise
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
 
-        ComputeT val = GPUStorage2ComputeT(pred[idx]) - GPUStorage2ComputeT(target[idx]);
+        ComputeT val =
+            GPUStorage2ComputeT(pred[idx]) - GPUStorage2ComputeT(target[idx]);
         if (weight != NULL) val *= GPUStorage2ComputeT(weight[idx]);
 
         ComputeT abs_val = abs(val);
         if (abs_val < 1) {
-            loss[idx] = GPUCompute2StorageT( 0.5 * val * val );
+            loss[idx] = GPUCompute2StorageT(0.5 * val * val);
         } else {
-            loss[idx] = GPUCompute2StorageT( abs_val - 0.5 );
+            loss[idx] = GPUCompute2StorageT(abs_val - 0.5);
         }
     }
 }
 
-__global__ void LossGrad_SmoothL1(size_t CUDA_NUM_LOOPS, size_t N, ComputeT scale, const StorageT* pred, const StorageT* target, const StorageT* weight, StorageT* diff){
-    // diff = scale * f'( weight * (pred - target) ) 
+__global__ void LossGrad_SmoothL1(
+    size_t CUDA_NUM_LOOPS, size_t N, ComputeT scale, const StorageT *pred,
+    const StorageT *target, const StorageT *weight, StorageT *diff) {
+    // diff = scale * f'( weight * (pred - target) )
     // f'(x) = x         if |x| < 1
     //       = sign(x)   otherwise
 
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
 
-        ComputeT val = GPUStorage2ComputeT(pred[idx]) - GPUStorage2ComputeT(target[idx]);
+        ComputeT val =
+            GPUStorage2ComputeT(pred[idx]) - GPUStorage2ComputeT(target[idx]);
         if (weight != NULL) val *= GPUStorage2ComputeT(weight[idx]);
 
         ComputeT abs_val = abs(val);
         if (abs_val < 1) {
-            diff[idx] = GPUCompute2StorageT( GPUStorage2ComputeT(diff[idx]) + scale * val );
+            diff[idx] = GPUCompute2StorageT(
+                GPUStorage2ComputeT(diff[idx]) + scale * val);
         } else {
-            diff[idx] = GPUCompute2StorageT( GPUStorage2ComputeT(diff[idx]) + scale * ( (ComputeT(0) < val) - (val < ComputeT(0)) ) );
+            diff[idx] = GPUCompute2StorageT(GPUStorage2ComputeT(diff[idx]) +
+                                            scale * ((ComputeT(0) < val) -
+                                                     (val < ComputeT(0))));
         }
     }
 }
 
-__global__ void Loss_Contrastive(size_t CUDA_NUM_LOOPS, size_t N, int C, ComputeT margin, const StorageT* a, const StorageT* b, const StorageT* y, StorageT* loss){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+__global__ void Loss_Contrastive(
+    size_t CUDA_NUM_LOOPS, size_t N, int C, ComputeT margin, const StorageT *a,
+    const StorageT *b, const StorageT *y, StorageT *loss) {
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
         ComputeT d = 0.0;
-        for (int c=0;c<C;++c){
-            int i = idx*C+c;
-            ComputeT d_i = GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
-            d += d_i*d_i;
+        for (int c = 0; c < C; ++c) {
+            int i = idx * C + c;
+            ComputeT d_i =
+                GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
+            d += d_i * d_i;
         }
         ComputeT y_n = GPUStorage2ComputeT(y[idx]);
-        ComputeT p = max( margin - sqrt(d), ComputeT(0)) ;
-        loss[idx] = GPUCompute2StorageT( ComputeT(0.5) * ( y_n * d + (ComputeT(1)-y_n) * p * p ) );
+        ComputeT p = max(margin - sqrt(d), ComputeT(0));
+        loss[idx] = GPUCompute2StorageT(
+            ComputeT(0.5) * (y_n * d + (ComputeT(1) - y_n) * p * p));
     }
 }
 
-__global__ void LossGrad_Contrastive(size_t CUDA_NUM_LOOPS, size_t N, int C, ComputeT margin, ComputeT scale, const StorageT* a, const StorageT* b, const StorageT* y, StorageT* a_diff, StorageT* b_diff){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+__global__ void LossGrad_Contrastive(
+    size_t CUDA_NUM_LOOPS, size_t N, int C, ComputeT margin, ComputeT scale,
+    const StorageT *a, const StorageT *b, const StorageT *y, StorageT *a_diff,
+    StorageT *b_diff) {
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) *
+                           (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) +
+                            size_t(threadIdx.x));
     if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
-        if ((int)(GPUStorage2ComputeT(y[idx]))) {
-            for (int c=0;c<C;++c){
-                int i = idx*C+c;
-                ComputeT diff_i = GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
+    for (size_t idx = idxBase; idx < min(N, idxBase + CUDA_NUM_LOOPS); ++idx) {
+        if ((int) (GPUStorage2ComputeT(y[idx]))) {
+            for (int c = 0; c < C; ++c) {
+                int i = idx * C + c;
+                ComputeT diff_i =
+                    GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
 
                 ComputeT beta = scale * diff_i;
-                a_diff[i] = GPUCompute2StorageT( GPUStorage2ComputeT(a_diff[i]) + beta );
-                b_diff[i] = GPUCompute2StorageT( GPUStorage2ComputeT(b_diff[i]) - beta );
+                a_diff[i] = GPUCompute2StorageT(
+                    GPUStorage2ComputeT(a_diff[i]) + beta);
+                b_diff[i] = GPUCompute2StorageT(
+                    GPUStorage2ComputeT(b_diff[i]) - beta);
             }
-        }else{
-
+        } else {
             ComputeT dist_sq = 0.0;
-            for (int c=0;c<C;++c){
-                int i = idx*C+c;
-                ComputeT diff_i = GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
+            for (int c = 0; c < C; ++c) {
+                int i = idx * C + c;
+                ComputeT diff_i =
+                    GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
                 dist_sq += diff_i * diff_i;
             }
             ComputeT dist = sqrt(dist_sq);
             ComputeT mdist = margin - dist;
 
             if (mdist > 0.0) {
-                for (int c=0;c<C;++c){
-                    int i = idx*C+c;
-                    ComputeT diff_i = GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
-                    ComputeT beta = -scale * mdist / (dist + ComputeT(1e-4)) * diff_i;
-                    a_diff[i] = GPUCompute2StorageT( GPUStorage2ComputeT(a_diff[i]) + beta );
-                    b_diff[i] = GPUCompute2StorageT( GPUStorage2ComputeT(b_diff[i]) - beta );
+                for (int c = 0; c < C; ++c) {
+                    int i = idx * C + c;
+                    ComputeT diff_i =
+                        GPUStorage2ComputeT(a[i]) - GPUStorage2ComputeT(b[i]);
+                    ComputeT beta =
+                        -scale * mdist / (dist + ComputeT(1e-4)) * diff_i;
+                    a_diff[i] = GPUCompute2StorageT(
+                        GPUStorage2ComputeT(a_diff[i]) + beta);
+                    b_diff[i] = GPUCompute2StorageT(
+                        GPUStorage2ComputeT(b_diff[i]) - beta);
                 }
             }
         }
@@ -1748,7 +1814,7 @@ cublasStatus_t Hasum(cublasHandle_t handle, int n, const half *x, int incx, floa
     float* answer;
     cudaMalloc(&answer, sizeof(float));
     Kernel_Hasum<<<1,1>>>(n, x, incx, answer);
-    cudaMemcpy(result, answer, sizeof(float), cudaMemcpyDeviceToHost); 
+    cudaMemcpy(result, answer, sizeof(float), cudaMemcpyDeviceToHost);
     cudaFree(answer);
     return CUBLAS_STATUS_SUCCESS;
 }
@@ -1758,9 +1824,9 @@ cublasStatus_t Hgemm(cublasHandle_t handle, cublasOperation_t transa, cublasOper
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // File format
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint8_t typeID(std::type_index t){
     if (t==typeid(half))        return uint8_t(0);
@@ -1781,7 +1847,7 @@ uint8_t typeID(std::type_index t){
 
 uint8_t readTypeID(std::string filename){
     FILE* fp = fopen(filename.c_str(),"rb");
-    while (fp==NULL) { 
+    while (fp==NULL) {
         std::cerr<<"readTypeID: fail to open file "<<filename<<". Please provide it first. Will retry after 5 seconds."<<std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(5));
         fp = fopen(filename.c_str(),"rb");
@@ -1817,7 +1883,7 @@ public:
     int numofitems(){ return dim[0]; };
 
     size_t sizeofitem(){ return marvin::sizeofitem(dim); };
-    
+
     ~Tensor(){
         if (CPUmem!=NULL)   delete[] CPUmem;
     };
@@ -1826,12 +1892,12 @@ public:
         for (size_t i=0;i<numel();++i){
             CPUmem[i]=val;
         }
-    };  
+    };
 
     size_t readHeader(FILE* fp){
         size_t read_cnt;
         uint8_t myTypeid = typeID(typeid(T));
-        uint32_t myTypesizeof = uint32_t(sizeof(T));        
+        uint32_t myTypesizeof = uint32_t(sizeof(T));
         uint8_t fpTypeid;       read_cnt = fread((void*)(&fpTypeid), sizeof(uint8_t), 1, fp);       if (read_cnt!=1) { std::cerr<<"Error at Tensor::readHeader: no data type. "<<std::endl; FatalError(__LINE__); }
         uint32_t fpTypesizeof;  read_cnt = fread((void*)(&fpTypesizeof), sizeof(uint32_t), 1, fp);  if (read_cnt!=1) { std::cerr<<"Error at Tensor::readHeader: no data size. "<<std::endl; FatalError(__LINE__); }
         int lenName;
@@ -1880,7 +1946,7 @@ public:
             if (myTypeid==fpTypeid && myTypesizeof!=fpTypesizeof){ std::cerr<<"Tensor read error: same type but different sizeof, maybe different computer architecture. "<<std::endl; FatalError(__LINE__);}
 
             //if (myTypeid!=fpTypeid){ std::cerr<<"Tensor read error: different types. "<<std::endl; FatalError(__LINE__); }
-            
+
             if (myTypeid==typeID(typeid(half)) && fpTypeid==typeID(typeid(float))){
                 //std::cout<<std::endl<<"converting from float to half"<<std::endl;
                 fseek(fp, -(sizeof(uint8_t)+sizeof(uint32_t)), SEEK_CUR);
@@ -1952,7 +2018,7 @@ public:
                 std::cerr<<"Tensor conversion is not supported: from Type "<<fpTypeid<<" to Type "<<myTypeid<<std::endl;
                 FatalError(__LINE__);
             }
-            
+
         }else{
             int lenName;
             read_cnt = fread((void*)(&lenName), sizeof(int), 1, fp);
@@ -1994,13 +2060,13 @@ public:
             int dim0 =  (dim[0]/batch_size + 1) * batch_size;
             size_t oversize = n/dim[0] * dim0;
             CPUmem = new T [oversize];
-            memset((void*)(CPUmem+n),0, (oversize-n)*sizeof(T));        
+            memset((void*)(CPUmem+n),0, (oversize-n)*sizeof(T));
         }
     };
 
     T* read(std::string filename,int batch_size=1){
         FILE* fp = fopen(filename.c_str(),"rb");
-        while (fp==NULL) { 
+        while (fp==NULL) {
             std::cerr<<"Tensor:read: fail to open file "<<filename<<". Please provide it first. Will retry after 5 seconds."<<std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(5));
             fp = fopen(filename.c_str(),"rb");
@@ -2025,7 +2091,7 @@ public:
         if (ferror (fp)){
             std::cerr << "disk writing failed"<<std::endl;
             FatalError();
-        }       
+        }
     };
 
     void writeData(FILE* fp, size_t max_size = 0){
@@ -2036,7 +2102,7 @@ public:
             if (ferror (fp)){
                 std::cerr << "disk writing failed" << std::endl;
                 FatalError();
-            }       
+            }
         }
     };
 
@@ -2049,17 +2115,17 @@ public:
 
     void write(std::string filename){
         FILE* fp = fopen(filename.c_str(),"wb");
-        while (fp==NULL) { 
+        while (fp==NULL) {
             std::cerr<<"Tensor::write: fail to open file "<<filename<<". Will retry after 5 seconds."<<std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(5));
             fp = fopen(filename.c_str(),"wb");
-        }       
+        }
         write(fp);
         fclose(fp);
         return;
     };
 
-    Tensor(std::string filename, int batch_size=1): CPUmem(NULL){ read(filename,batch_size); }; 
+    Tensor(std::string filename, int batch_size=1): CPUmem(NULL){ read(filename,batch_size); };
 
     Tensor(FILE* fp): CPUmem(NULL){ read(fp); };
 
@@ -2109,12 +2175,12 @@ public:
     };
 
     void print(std::vector<int> display_dim){
-        
+
         std::cout<<"  name:"<<name<<" dim"; veciPrint(dim); std::cout<<std::endl;
         switch (display_dim.size()){
             case 1:
                 for (int i=0;i<min((size_t)(display_dim[0]),numel());++i)
-                    std::cout<<CPUmem[i]<<" ";          
+                    std::cout<<CPUmem[i]<<" ";
                 std::cout<<std::endl;
                 break;
             case 2:
@@ -2123,7 +2189,7 @@ public:
                         std::cout<<(CPUmem[i*dim[display_dim.size()-1]+j])<<" ";
                     }
                     std::cout<<std::endl;
-                }           
+                }
                 break;
             case 3:
                 for (int i=0;i<display_dim[0];++i){
@@ -2137,7 +2203,7 @@ public:
                 }
                 break;
         }
-        
+
     };
 };
 
@@ -2146,7 +2212,7 @@ std::vector<Tensor<T>*> readTensors(std::string filename, size_t max_count = SIZ
 
     FILE* fp = fopen(filename.c_str(),"rb");
 
-    while (fp==NULL) { 
+    while (fp==NULL) {
         std::cerr<<"readTensors: fail to open file "<<filename<<". Please provide it first. Will retry after 5 seconds."<<std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(5));
         fp = fopen(filename.c_str(),"rb");
@@ -2155,7 +2221,7 @@ std::vector<Tensor<T>*> readTensors(std::string filename, size_t max_count = SIZ
     std::vector<Tensor<T>*> tensors;
     size_t count = 0;
     while (feof(fp)==0) {
-        tensors.push_back(new Tensor<T>(fp)); 
+        tensors.push_back(new Tensor<T>(fp));
         count++;
         if (count>=max_count) break;
 		int c = getc(fp);
@@ -2168,7 +2234,7 @@ std::vector<Tensor<T>*> readTensors(std::string filename, size_t max_count = SIZ
 template <class T>
 void writeTensors(std::string filename, std::vector<Tensor<T>*> tensors){
     FILE* fp = fopen(filename.c_str(),"wb");
-    while (fp==NULL) { 
+    while (fp==NULL) {
         std::cerr<<"writeTensors: fail to open file "<<filename<<". Disk full? Will retry after 5 seconds."<<std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(5));
         fp = fopen(filename.c_str(),"wb");
@@ -2181,9 +2247,9 @@ void writeTensors(std::string filename, std::vector<Tensor<T>*> tensors){
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Response and Layer
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Response{
 public:
@@ -2204,7 +2270,7 @@ public:
     std::vector<ComputeT> receptive_gap;
     std::vector<ComputeT> receptive_offset;
 
-    size_t sizeofitem(){ return marvin::sizeofitem(dim); }; 
+    size_t sizeofitem(){ return marvin::sizeofitem(dim); };
 
     size_t numBytes(){ return sizeofStorageT*(marvin::numel(dim)); };
 
@@ -2214,7 +2280,7 @@ public:
 
     size_t Malloc(std::vector<int> dim_){
         size_t memoryBytes = 0;
-        if (dataGPU==NULL){ // two layers (one for training, one for testing) may output to the same response and Malloc twice, ignore the second time  
+        if (dataGPU==NULL){ // two layers (one for training, one for testing) may output to the same response and Malloc twice, ignore the second time
 
             dim = dim_;
             stride.resize(dim.size());
@@ -2233,7 +2299,7 @@ public:
             std::cout<<"                                                                               ";
             std::cout<< (need_diff? "* " : "  ");
 
-            std::cout<<name; veciPrint(dim); 
+            std::cout<<name; veciPrint(dim);
             if (!receptive_field.empty())   {   std::cout<<" RF"; vecfPrint(receptive_field);   }
             if (!receptive_gap.empty())     {   std::cout<<" GP"; vecfPrint(receptive_gap);     }
             if (!receptive_offset.empty())  {   std::cout<<" OF"; vecfPrint(receptive_offset);      }
@@ -2266,7 +2332,7 @@ public:
             return desc;
         }else{
             for(int i=0;i<number_group.size();++i){
-                if (number_group[i]==group){                    
+                if (number_group[i]==group){
                     return desc_group[i];
                 }
             }
@@ -2280,7 +2346,7 @@ public:
                                                 CUDNNStorageT,
                                                 dim_new.size(),
                                                 &dim_new[0],
-                                                &stride[0]) );      
+                                                &stride[0]) );
         desc_group.push_back(desc_new);
         return desc_new;
     }
@@ -2289,7 +2355,7 @@ public:
         checkCUDNN(__LINE__,cudnnDestroyTensorDescriptor(desc));
         for (int i=0; i<desc_group.size();++i){
             checkCUDNN(__LINE__,cudnnDestroyTensorDescriptor(desc_group[i]));
-        }       
+        }
         if (dataGPU!=NULL) checkCUDA(__LINE__, cudaFree(dataGPU));
         if (diffGPU!=NULL) checkCUDA(__LINE__, cudaFree(diffGPU));
     };
@@ -2353,7 +2419,7 @@ public:
 
     std::vector<Response*> in;
     std::vector<Response*> out;
-    
+
     std::mt19937 rng;
     cudnnHandle_t cudnnHandle;
     cublasHandle_t cublasHandle;
@@ -2443,7 +2509,7 @@ public:
             case Xavier:
                 {
                     int fan_in = ComputeT(n/dim[0]);
-                    ComputeT scale = sqrt(ComputeT(3) / fan_in);                    
+                    ComputeT scale = sqrt(ComputeT(3) / fan_in);
 
                     //default_random_engine generator;
                     std::uniform_real_distribution<ComputeT> distribution(-scale,scale);
@@ -2467,12 +2533,12 @@ public:
                         *p = paramStorageT;
                     }
                 }
-                break;  
+                break;
         }
         checkCUDA(__LINE__, cudaMemcpy(GPUmem, CPUbuf, n*sizeofStorageT, cudaMemcpyHostToDevice) );
 
         delete [] CPUbuf;
-    }   
+    }
 
     void randInit(){
         if (weight_dataGPU!=NULL) fillGPU(weight_dataGPU, weight_dim, weight_filler, weight_filler_param);
@@ -2487,7 +2553,7 @@ public:
     void clearHist(){
         if (weight_diffGPU!=NULL) checkCUDA(__LINE__, cudaMemset(weight_histGPU, 0, sizeofStorageT * weight_numel));
         if (bias_diffGPU!=NULL)   checkCUDA(__LINE__, cudaMemset(bias_histGPU, 0, sizeofStorageT * bias_numel));
-    };  
+    };
 
     void setWeights(std::vector<Tensor<StorageT>*> weights){
         for (int i=0;i<weights.size();++i){
@@ -2521,7 +2587,7 @@ public:
                     std::cout<< " " << name << ".bias";
                     veciPrint(weights[i]->dim);
                     std::cout << " is set."<<std::endl;
-                    weights[i]->writeGPU(bias_dataGPU);                 
+                    weights[i]->writeGPU(bias_dataGPU);
                 }else{
                     std::cout<<"[Warning] "<< name << ".bias is found but not loaded because the numels are mismatched: ";
                     std::cout<<"need"; veciPrint(bias_dim);
@@ -2541,7 +2607,7 @@ public:
             delete t;
         }
 
-        if (bias_dataGPU!=NULL){        
+        if (bias_dataGPU!=NULL){
             Tensor<StorageT>* t = new Tensor<StorageT>(name+ ".bias",bias_dim);
             t->readGPU(bias_dataGPU);
             t->write(fp);
@@ -2556,7 +2622,7 @@ public:
             t->print(display_weight);
             delete t;
         }
-        if (bias_dataGPU!=NULL){        
+        if (bias_dataGPU!=NULL){
             Tensor<StorageT>* t = new Tensor<StorageT>(name+ ".bias",bias_dim);
             t->readGPU(bias_dataGPU);
             t->print(display_bias);
@@ -2589,7 +2655,7 @@ public:
             delete t;
         }
 
-        if (bias_diffGPU!=NULL){        
+        if (bias_diffGPU!=NULL){
             Tensor<StorageT>* t = new Tensor<StorageT>(name+ ".bias_diff",bias_dim);
             t->readGPU(bias_diffGPU);
             t->write(fp);
@@ -2604,19 +2670,19 @@ public:
             t->print(display_weight);
             delete t;
         }
-        if (bias_diffGPU!=NULL){        
+        if (bias_diffGPU!=NULL){
             Tensor<StorageT>* t = new Tensor<StorageT>(name+ ".bias_diff",bias_dim);
             t->readGPU(bias_diffGPU);
             t->print(display_bias);
             delete t;
         }
-    };  
+    };
 
 
 
 
     void update(){
-        if (train_me){      
+        if (train_me){
             if (weight_numel>0 && weight_histGPU!=NULL) bsa2b(weight_numel, weight_histGPU, weight_dataGPU);
             if (bias_numel>0 && bias_histGPU!=NULL)     bsa2b(  bias_numel,   bias_histGPU,   bias_dataGPU);
         }
@@ -2624,9 +2690,9 @@ public:
 
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Layers
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 class DataLayer : public Layer {
 public:
@@ -2850,7 +2916,7 @@ class DiskDataLayer : public DataLayer {
     std::future<void> lock;
     FILE* dataFILE;
     Tensor<StorageT>* labelCPUall;
-    std::vector<size_t> ordering; 
+    std::vector<size_t> ordering;
     std::bernoulli_distribution* distribution_bernoulli;
     std::vector<std::uniform_int_distribution<int>*> distribution_uniform;
 
@@ -2863,7 +2929,7 @@ class DiskDataLayer : public DataLayer {
 
     size_t numel_per_channel_crop ;
     size_t numel_all_channel_crop ;
-    size_t numel_per_channel_orgi ; 
+    size_t numel_per_channel_orgi ;
     size_t numel_batch_all_channel_crop ;
 
     int epoch_prefetch;
@@ -2884,7 +2950,7 @@ public:
 
     void init(){
         epoch_prefetch  = 0;
-        distribution_bernoulli = new std::bernoulli_distribution(0.5);  
+        distribution_bernoulli = new std::bernoulli_distribution(0.5);
         dataFILE = NULL;
         labelCPUall = NULL;
         dataCPU = NULL;
@@ -2943,7 +3009,7 @@ public:
         }
     };
 
-    DiskDataLayer(std::string name_, Phase phase_, bool mirror_, std::vector<int> size_data_, std::vector<int> size_crop_, std::string file_data_, std::string file_label_, int batch_size_): 
+    DiskDataLayer(std::string name_, Phase phase_, bool mirror_, std::vector<int> size_data_, std::vector<int> size_crop_, std::string file_data_, std::string file_label_, int batch_size_):
         DataLayer(name_), mirror(mirror_), size_data(size_data_), size_crop(size_crop_), file_data(file_data_), file_label(file_label_), batch_size(batch_size_){
         phase = phase_;
         init();
@@ -2978,7 +3044,7 @@ public:
         if (phase!=Testing){
             ordering = randperm(labelCPUall->numofitems(), rng);
         }
-    }; 
+    };
 
     void prefetch(){
 
@@ -2988,7 +3054,7 @@ public:
 
             int image_i = ordering[counter];
 
-            //label 
+            //label
             size_t labelSizeOfItem = labelCPU->sizeofitem();
             memcpy(labelCPU->CPUmem+i*labelSizeOfItem, labelCPUall->CPUmem+image_i*labelSizeOfItem, labelSizeOfItem*sizeofStorageT);
 
@@ -3027,7 +3093,7 @@ public:
                             for (size_t c=0; c<size_data[0];++c){
                                 memBegin[idx_crop+c*numel_per_channel_crop] =  item_raw[idx_orgi+c*numel_per_channel_orgi];
                             }
-                        }               
+                        }
                     }
                 }else if (size_crop.size()==3){
                     for (size_t x_crop = 0; x_crop < size_crop[0]; ++ x_crop){
@@ -3045,7 +3111,7 @@ public:
                                     memBegin[idx_crop+c*numel_per_channel_crop] =  item_raw[idx_orgi+c*numel_per_channel_orgi];
                                 }
                             }
-                        }               
+                        }
                     }
                 }else{
                     std::cerr<<"Error: dimension unimplemented. You can implement by yourself."<<std::endl;
@@ -3096,7 +3162,7 @@ public:
 
         out[0]->need_diff = false;
         out[0]->receptive_field.resize(data_dim.size()-2);  fill_n(out[0]->receptive_field.begin(),data_dim.size()-2,1);
-        out[0]->receptive_gap.resize(data_dim.size()-2);    fill_n(out[0]->receptive_gap.begin(),data_dim.size()-2,1);      
+        out[0]->receptive_gap.resize(data_dim.size()-2);    fill_n(out[0]->receptive_gap.begin(),data_dim.size()-2,1);
         out[0]->receptive_offset.resize(data_dim.size()-2); fill_n(out[0]->receptive_offset.begin(),data_dim.size()-2,0);
         memoryBytes += out[0]->Malloc(data_dim);
 
@@ -3111,7 +3177,7 @@ public:
         lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
 
         return memoryBytes;
-    };  
+    };
 };
 
 
@@ -3138,7 +3204,7 @@ public:
 
     ConvolutionLayer(JSON* json){
         SetOrDie(json, name)
-        SetValue(json, phase,               TrainingTesting)        
+        SetValue(json, phase,               TrainingTesting)
         SetValue(json, train_me,            true)
         SetOrDie(json, num_output           )
         SetOrDie(json, window               )
@@ -3167,7 +3233,7 @@ public:
                     std::vector<int> padding_, std::vector<int> stride_, std::vector<int> upscale_,
                     ComputeT weight_lr_mult_,   Filler weight_filler_, ComputeT weight_filler_param_,
                     ComputeT bias_lr_mult_,     Filler bias_filler_,   ComputeT  bias_filler_param_):
-                    Layer(name_), 
+                    Layer(name_),
                     num_output(num_output_), window(window_), stride(stride_), padding(padding_), upscale(upscale_){
 
         weight_lr_mult = weight_lr_mult_;
@@ -3250,7 +3316,7 @@ public:
 
         for (int i=0;i<out.size();++i){
             out[i]->need_diff = train_me || in[i]->need_diff; // if one of them need the grad
-                
+
             std::vector<int> dimOut;
             dimOut.resize(in[i]->dim.size());
 
@@ -3281,7 +3347,7 @@ public:
     void forward(Phase phase_){
 
         for (int i=0;i<in.size();++i){
-            for (int g = 0; g < group; g++) {       
+            for (int g = 0; g < group; g++) {
                 checkCUDNN(__LINE__,cudnnConvolutionForward(cudnnHandle,
                                                       one,
                                                       in[i]->getDesc(group),
@@ -3289,8 +3355,8 @@ public:
                                                       filter_desc,
                                                       weight_dataGPU + (g * weight_numel / group),
                                                       conv_desc,
-                                                      //CUDNN_CONVOLUTION_FWD_ALGO_DIRECT, 
-                                                      CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM, 
+                                                      //CUDNN_CONVOLUTION_FWD_ALGO_DIRECT,
+                                                      CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM,
                                                       // CUDNN For 3-d convolutions, only CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM is supported; support is provided for any format for srcDesc and destDesc as well as support for all data type configurations.
                                                       NULL,
                                                       0,
@@ -3301,8 +3367,8 @@ public:
             }
 
             if (bias_dim.size()<=5){ // cudnnAddTensor_v3 only support upto 5 dimensions
-                checkCUDNN(__LINE__,cudnnAddTensor_v3(cudnnHandle, 
-                                              one, 
+                checkCUDNN(__LINE__,cudnnAddTensor_v3(cudnnHandle,
+                                              one,
                                               bias_desc,
                                               bias_dataGPU,
                                               one,
@@ -3321,7 +3387,7 @@ public:
                     bias_stride[d] = bias_stride[d+1] *  bias_dim_bug[d+1];
                 }
                 cudnnTensorDescriptor_t bias_desc_bug;
-                checkCUDNN(__LINE__,cudnnCreateTensorDescriptor(&bias_desc_bug) );          
+                checkCUDNN(__LINE__,cudnnCreateTensorDescriptor(&bias_desc_bug) );
                 checkCUDNN(__LINE__,cudnnSetTensorNdDescriptor(bias_desc_bug,
                                                             CUDNNStorageT,
                                                             bias_dim_bug.size(),
@@ -3343,9 +3409,9 @@ public:
                                                         out_dim_bug.size(),
                                                         &out_dim_bug[0],
                                                         &strideA[0]) );
-                checkCUDNN(__LINE__,cudnnAddTensor(cudnnHandle, 
+                checkCUDNN(__LINE__,cudnnAddTensor(cudnnHandle,
                                               CUDNN_ADD_SAME_C,
-                                              one, 
+                                              one,
                                               bias_desc_bug,
                                               bias_dataGPU,
                                               one,
@@ -3366,7 +3432,7 @@ public:
                                                               filter_desc, weight_dataGPU + (g * weight_numel / group),
                                                               out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                               conv_desc,
-                                                              one, 
+                                                              one,
                                                               in[i]->getDesc(group), in[i]->diffGPU + (g * in[i]->sizeofitem() / group)));
                 }
             }
@@ -3400,7 +3466,7 @@ public:
         // destory the descriptor
         checkCUDNN(__LINE__,cudnnDestroyFilterDescriptor(filter_desc) );
         checkCUDNN(__LINE__,cudnnDestroyTensorDescriptor(bias_desc) );
-        checkCUDNN(__LINE__,cudnnDestroyConvolutionDescriptor(conv_desc) );     
+        checkCUDNN(__LINE__,cudnnDestroyConvolutionDescriptor(conv_desc) );
     };
 };
 
@@ -3463,7 +3529,7 @@ public:
         bias_dim[0] = num_output;
 
         weight_numel = numel(weight_dim);
-        bias_numel   = numel(bias_dim);     
+        bias_numel   = numel(bias_dim);
 
         if (weight_numel>0){
             std::cout<<" weight"; veciPrint(weight_dim);
@@ -3499,7 +3565,7 @@ public:
                 out[i]->receptive_gap[d] = 0;
                 out[i]->receptive_offset[d] = 0;
 
-            }           
+            }
 
             memoryBytes += out[i]->Malloc(dimOut);
 
@@ -3522,7 +3588,7 @@ public:
             }
         }
 
-        for (int i=0;i<in.size();++i){      
+        for (int i=0;i<in.size();++i){
             if (train_me){
                 ComputeT beta = ComputeT(1);
                 if (weight_numel>0){
@@ -3547,7 +3613,7 @@ class DropoutLayer: public Layer{
     std::future<void> lock;
     bool current_mask;
     std::vector< StorageT* > GPUmask[2];
-    std::vector< StorageT* > CPUmask;   
+    std::vector< StorageT* > CPUmask;
     std::vector<int > BYTESmask;
     std::vector<int > SIZEmask;
 public:
@@ -3591,7 +3657,7 @@ public:
         std::cout<<name<<std::endl;
 
         if (in.size()==0) { std::cout<<std::endl<<"DropoutLayer in shouldn't be empty"<<std::endl; FatalError(__LINE__); }
-        if (in.size()!=out.size()) { std::cout<<std::endl<<"DropoutLayer #in should be the same as #out"<<std::endl; FatalError(__LINE__); }        
+        if (in.size()!=out.size()) { std::cout<<std::endl<<"DropoutLayer #in should be the same as #out"<<std::endl; FatalError(__LINE__); }
 
         GPUmask[0].resize(out.size());
         GPUmask[1].resize(out.size());
@@ -3755,7 +3821,7 @@ public:
         for (int i=0;i<out.size();++i){
             out[i]->need_diff = in[i]->need_diff;
             out[i]->receptive_field = in[i]->receptive_field;
-            out[i]->receptive_gap = in[i]->receptive_gap;           
+            out[i]->receptive_gap = in[i]->receptive_gap;
             out[i]->receptive_offset = in[i]->receptive_offset;
             memoryBytes += out[i]->Malloc(in[i]->dim);
         }
@@ -3936,7 +4002,7 @@ public:
         for (int i=0;i<out.size();++i){
             out[i]->need_diff = in[i]->need_diff;
             out[i]->receptive_field = in[i]->receptive_field;
-            out[i]->receptive_gap = in[i]->receptive_gap;       
+            out[i]->receptive_gap = in[i]->receptive_gap;
             out[i]->receptive_offset = in[i]->receptive_offset;
             memoryBytes += out[i]->Malloc(in[i]->dim);
         }
@@ -3979,7 +4045,7 @@ public:
                     case CrossChannel:
                         checkCUDNN(__LINE__,cudnnLRNCrossChannelBackward(cudnnHandle, desc, CUDNN_LRN_CROSS_CHANNEL_DIM1,
                                                             one,
-                                                            out[i]->desc /*srcDesc*/, out[i]->dataGPU /*srcData*/, 
+                                                            out[i]->desc /*srcDesc*/, out[i]->dataGPU /*srcData*/,
                                                             out[i]->desc /*srcDiffDesc*/, out[i]->diffGPU /*srcDiffData*/,
                                                             in[i]->desc /*destDesc*/, in[i]->dataGPU /*destData*/,
                                                             zero, //one, //bbb
@@ -3995,11 +4061,11 @@ public:
                                                             out[i]->diffGPU /*srcDiffData*/,
                                                             tempData /*tempData*/, tempData2 /*tempData2*/,
                                                             zero, //one, //bbb
-                                                            in[i]->desc /*destDataDesc*/, in[i]->diffGPU /*destDataDiff*/, 
-                                                            destMeansDiff /*destMeansDiff*/));                  
+                                                            in[i]->desc /*destDataDesc*/, in[i]->diffGPU /*destDataDiff*/,
+                                                            destMeansDiff /*destMeansDiff*/));
 #endif
                     break;
-                }               
+                }
             }
         }
     };
@@ -4120,7 +4186,7 @@ public:
             }
 
             out[i]->receptive_field = in[i*2]->receptive_field;
-            out[i]->receptive_gap = in[i*2]->receptive_gap;         
+            out[i]->receptive_gap = in[i*2]->receptive_gap;
             out[i]->receptive_offset = in[i*2]->receptive_offset;
             memoryBytes += out[i]->Malloc(dim);
         }
@@ -4247,7 +4313,7 @@ public:
             if (in[i*2]->need_diff){
                 size_t N = numel(in[i*2]->dim);
                 switch(shape.size()){
-                    case 2:                 
+                    case 2:
                         Kernel_ROIPoolBackward_2D<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N), N, in[i*2]->diffGPU, in[i*2+1]->dataGPU, out[i]->diffGPU, GPUIndex[i], spatial_scale, in[i*2+1]->dim[0], in[i*2]->dim[1], in[i*2]->dim[2], in[i*2]->dim[3], shape[0], shape[1]);
                     break;
                     case 3:
@@ -4367,7 +4433,7 @@ public:
         std::cout<<name<<std::endl;
 
         in_group = in.size()/out.size();
-        if (in_group<2 || in.size()!= in_group * out.size()){ std::cout<<"ElementWiseLayer in out size wrong "<<std::endl; FatalError(__LINE__); }      
+        if (in_group<2 || in.size()!= in_group * out.size()){ std::cout<<"ElementWiseLayer in out size wrong "<<std::endl; FatalError(__LINE__); }
 
         for(int j=0;j<out.size();j++){
             out[j]->need_diff = false;
@@ -4438,7 +4504,9 @@ public:
     std::vector<ComputeT> loss_weights;
     ComputeT margin;
 
-    LossLayer(std::string name_, LossObjective mode_, ComputeT loss_weight_): Layer(name_), mode(mode_), loss_weight(loss_weight_), loss_values(NULL), loss_weightsGPU(NULL){
+    LossLayer(std::string name_, LossObjective mode_, ComputeT loss_weight_)
+        : Layer(name_), mode(mode_), loss_weight(loss_weight_),
+          loss_values(NULL), loss_weightsGPU(NULL) {
         train_me = false;
     };
 
@@ -4453,37 +4521,75 @@ public:
         train_me = false;
     };
 
-    ~LossLayer(){
-        if (loss_values!=NULL) checkCUDA(__LINE__, cudaFree(loss_values));
-        if (loss_weightsGPU!=NULL) checkCUDA(__LINE__, cudaFree(loss_weightsGPU));
+    ~LossLayer() {
+        if (loss_values != NULL)
+            checkCUDA(__LINE__, cudaFree(loss_values));
+        if (loss_weightsGPU != NULL)
+            checkCUDA(__LINE__, cudaFree(loss_weightsGPU));
     };
 
-    size_t Malloc(Phase phase_){
-        std::cout<< (train_me? "* " : "  ");
-        std::cout<<name<<std::endl;
+    size_t Malloc(Phase phase_) {
+        std::cout << (train_me ? "* " : "  ");
+        std::cout << name << std::endl;
 
         size_t memoryBytes = 0;
 
         numExamples = in[0]->dim[0];
 
-        switch(mode){
+        switch (mode) {
             case MultinomialLogistic_StableSoftmax:
             case MultinomialLogistic:
-                if (!(in.size()==2 || in.size()==3)) { std::cout<<"LossLayer: MultinomialLogistic should have 2 or 3 ins"<<std::endl; FatalError(__LINE__); }
-                if (!same_dim_EC(in[0]->dim,in[1]->dim)){ std::cout<<"LossLayer: MultinomialLogistic should have the same dimensions except channels"<<std::endl; FatalError(__LINE__); }
-                if (in[1]->dim[1]!=1) { std::cout<<"LossLayer: MultinomialLogistic in[1] should have only 1 channel"<<std::endl; FatalError(__LINE__); }
-                if (in.size()==3 && !( numel(in[0]->dim) == numel(in[2]->dim) || sizeofitem(in[0]->dim) == numel(in[2]->dim) ) ){   std::cout<<"LossLayer: MultinomialLogistic in[2] size should be either the same with in[0] or should be the same with sizeofitem for in[0]"<<std::endl; FatalError(__LINE__); }
-                loss_numel = numExamples*numspel(in[0]->dim);
-                break;
+                if (!(in.size() == 2 || in.size() == 3)) {
+                    std::cout <<
+                    "LossLayer: MultinomialLogistic should have 2 or 3 ins" <<
+                    std::endl;
+                    FatalError(__LINE__);
+                }
+            if (!same_dim_EC(in[0]->dim, in[1]->dim)) {
+                std::cout <<
+                "LossLayer: MultinomialLogistic should have the same dimensions except channels" <<
+                std::endl;
+                FatalError(__LINE__);
+            }
+            if (in[1]->dim[1] != 1) {
+                std::cout <<
+                "LossLayer: MultinomialLogistic in[1] should have only 1 channel" <<
+                std::endl;
+                FatalError(__LINE__);
+            }
+            if (in.size() == 3 && !(numel(in[0]->dim) == numel(in[2]->dim) ||
+                                    sizeofitem(in[0]->dim) ==
+                                    numel(in[2]->dim))) {
+                std::cout <<
+                "LossLayer: MultinomialLogistic in[2] size should be either the same with in[0] or should be the same with sizeofitem for in[0]" <<
+                std::endl;
+                FatalError(__LINE__);
+            }
+            loss_numel = numExamples * numspel(in[0]->dim);
+            break;
             case SmoothL1:
-                if (!(in.size()==2 || in.size()==3)) { std::cout<<"LossLayer: SmoothL1 should have 2 or 3 ins"<<std::endl; FatalError(__LINE__); }
-                if (!same_dim(in[0]->dim,in[1]->dim)){ std::cout<<"LossLayer: SmoothL1 should have the same dimensions"<<std::endl; FatalError(__LINE__); }
-                if (in.size()==3  && !same_dim(in[0]->dim,in[2]->dim)){ std::cout<<"LossLayer: SmoothL1 should have the same dimensions"<<std::endl; FatalError(__LINE__); }
-                loss_numel = numel(in[0]->dim);
-                break;
+                if (!(in.size() == 2 || in.size() == 3)) {
+                    std::cout << "LossLayer: SmoothL1 should have 2 or 3 ins" <<
+                    std::endl;
+                    FatalError(__LINE__);
+                }
+            if (!same_dim(in[0]->dim, in[1]->dim)) {
+                std::cout <<
+                "LossLayer: SmoothL1 should have the same dimensions" <<
+                std::endl;
+                FatalError(__LINE__);
+            }
+            if (in.size() == 3 && !same_dim(in[0]->dim, in[2]->dim)) {
+                std::cout <<
+                "LossLayer: SmoothL1 should have the same dimensions" <<
+                std::endl;
+                FatalError(__LINE__);
+            }
+            loss_numel = numel(in[0]->dim);
+            break;
             case Contrastive:
                 loss_numel = numExamples;
-                break;
+            break;
             case EuclideanSSE:
                 break;
             case HingeL1:
@@ -4498,30 +4604,32 @@ public:
         scale = loss_weight / loss_numel;
 
         memoryBytes += loss_numel * sizeofStorageT;
-        checkCUDA(__LINE__, cudaMalloc( &loss_values, memoryBytes) );
+        checkCUDA(__LINE__, cudaMalloc(&loss_values, memoryBytes));
 
 
-        if (loss_weights.size()>0){
+        if (loss_weights.size() > 0) {
             size_t newBytes = loss_weights.size() * sizeofStorageT;
-            checkCUDA(__LINE__, cudaMalloc( &loss_weightsGPU, newBytes) );
+            checkCUDA(__LINE__, cudaMalloc(&loss_weightsGPU, newBytes));
             memoryBytes += newBytes;
 
-            StorageT* CPUram = new StorageT[loss_weights.size()];
-            for (int i=0;i<loss_weights.size(); ++i){
+            StorageT *CPUram = new StorageT[loss_weights.size()];
+            for (int i = 0; i < loss_weights.size(); ++i) {
                 CPUram[i] = CPUCompute2StorageT(loss_weights[i]);
             }
-            checkCUDA(__LINE__, cudaMemcpy(loss_weightsGPU, CPUram, newBytes, cudaMemcpyHostToDevice) );
-            delete [] CPUram;
+            checkCUDA(__LINE__, cudaMemcpy(loss_weightsGPU, CPUram, newBytes,
+                                           cudaMemcpyHostToDevice));
+            delete[] CPUram;
         }
 
         return memoryBytes;
     };
 
-    void display(){
-        std::cout << " loss = "<< loss;
-        std::cout << " * "<<loss_weight;
-        if (mode==MultinomialLogistic_StableSoftmax || mode==MultinomialLogistic)
-            std::cout << "  eval = "<< result;
+    void display() {
+        std::cout << " loss = " << loss;
+        std::cout << " * " << loss_weight;
+        if (mode == MultinomialLogistic_StableSoftmax ||
+            mode == MultinomialLogistic)
+            std::cout << "  eval = " << result;
         std::cout << "   ";
     };
 
@@ -4530,16 +4638,39 @@ public:
         switch(mode){
             case MultinomialLogistic_StableSoftmax:
             case MultinomialLogistic:
-                Accuracy_MultinomialLogistic<<<CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,in[0]->dim[1],numspel(in[0]->dim),(in.size()==3 ? numel(in[2]->dim) : 0),in[0]->dataGPU,in[1]->dataGPU,loss_weightsGPU,(in.size()==3 ? in[2]->dataGPU : NULL),loss_values);
-                checkCUBLAS(__LINE__, GPUasum(cublasHandle, loss_numel, loss_values, 1, &resultSum));
+                Accuracy_MultinomialLogistic<<<CUDA_GET_BLOCKS(loss_numel),
+                    CUDA_NUM_THREADS>>>(
+                        CUDA_GET_LOOPS(loss_numel),
+                        loss_numel, in[0]->dim[1], numspel(in[0]->dim),
+                        (in.size()==3 ? numel(in[2]->dim) : 0),
+                        in[0]->dataGPU, in[1]->dataGPU, loss_weightsGPU,
+                        (in.size()==3 ? in[2]->dataGPU : NULL),
+                        loss_values);
+                checkCUBLAS(__LINE__, GPUasum(cublasHandle, loss_numel,
+                                              loss_values, 1, &resultSum));
                 result += resultSum/loss_numel;
-                Loss_MultinomialLogistic<<<CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,in[0]->dim[1],numspel(in[0]->dim),(in.size()==3 ? numel(in[2]->dim) : 0),in[0]->dataGPU,in[1]->dataGPU,loss_weightsGPU,(in.size()==3 ? in[2]->dataGPU : NULL),loss_values);
+                Loss_MultinomialLogistic<<<CUDA_GET_BLOCKS(loss_numel),
+                    CUDA_NUM_THREADS>>>(
+                        CUDA_GET_LOOPS(loss_numel),
+                        loss_numel, in[0]->dim[1], numspel(in[0]->dim),
+                        (in.size()==3 ? numel(in[2]->dim) : 0),
+                        in[0]->dataGPU, in[1]->dataGPU, loss_weightsGPU,
+                        (in.size()==3 ? in[2]->dataGPU : NULL),
+                        loss_values);
                 break;
             case SmoothL1:
-                Loss_SmoothL1<<<CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,in[0]->dataGPU,in[1]->dataGPU,(in.size()==3 ? in[2]->dataGPU : NULL),loss_values);
+                Loss_SmoothL1<<<CUDA_GET_BLOCKS(loss_numel),
+                    CUDA_NUM_THREADS>>>(
+                        CUDA_GET_LOOPS(loss_numel),
+                        loss_numel, in[0]->dataGPU, in[1]->dataGPU,
+                        (in.size()==3 ? in[2]->dataGPU : NULL), loss_values);
                 break;
             case Contrastive:
-                Loss_Contrastive<<<CUDA_GET_BLOCKS(numExamples), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,in[0]->dim[1],margin,in[0]->dataGPU,in[1]->dataGPU,in[2]->dataGPU,loss_values);
+                Loss_Contrastive<<<CUDA_GET_BLOCKS(numExamples),
+                    CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),
+                        loss_numel, in[0]->dim[1],
+                        margin,in[0]->dataGPU, in[1]->dataGPU, in[2]->dataGPU,
+                        loss_values);
                 break;
             case EuclideanSSE:
                 break;
@@ -4553,8 +4684,9 @@ public:
                 break;
         }
         ComputeT lossSum;
-        checkCUBLAS(__LINE__, GPUasum(cublasHandle, loss_numel, loss_values, 1, &lossSum));
-        loss += lossSum/loss_numel;     
+        checkCUBLAS(__LINE__, GPUasum(cublasHandle, loss_numel,
+                                      loss_values, 1, &lossSum));
+        loss += lossSum/loss_numel;
     };
 
 
@@ -4563,16 +4695,40 @@ public:
         if (in[0]->need_diff){
             switch(mode){
                 case MultinomialLogistic_StableSoftmax:
-                    LossGrad_MultinomialLogistic_StableSoftmax<<<CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,in[0]->dim[1],numspel(in[0]->dim),(in.size()==3 ? numel(in[2]->dim) : 0),scale,in[0]->dataGPU,in[1]->dataGPU,loss_weightsGPU,(in.size()==3 ? in[2]->dataGPU : NULL),in[0]->diffGPU);
+                    LossGrad_MultinomialLogistic_StableSoftmax<<<
+                        CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(
+                            CUDA_GET_LOOPS(loss_numel),
+                            loss_numel, in[0]->dim[1], numspel(in[0]->dim),
+                            (in.size()==3 ? numel(in[2]->dim) : 0), scale,
+                            in[0]->dataGPU, in[1]->dataGPU, loss_weightsGPU,
+                            (in.size()==3 ? in[2]->dataGPU : NULL),
+                            in[0]->diffGPU);
                     break;
                 case MultinomialLogistic:
-                    LossGrad_MultinomialLogistic<<<CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,in[0]->dim[1],numspel(in[0]->dim),(in.size()==3 ? numel(in[2]->dim) : 0),scale,in[0]->dataGPU,in[1]->dataGPU,loss_weightsGPU,(in.size()==3 ? in[2]->dataGPU : NULL),in[0]->diffGPU);
+                    LossGrad_MultinomialLogistic<<<
+                        CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(
+                            CUDA_GET_LOOPS(loss_numel),
+                            loss_numel, in[0]->dim[1], numspel(in[0]->dim),
+                            (in.size()==3 ? numel(in[2]->dim) : 0), scale,
+                            in[0]->dataGPU, in[1]->dataGPU, loss_weightsGPU,
+                            (in.size()==3 ? in[2]->dataGPU : NULL),
+                            in[0]->diffGPU);
                     break;
                 case SmoothL1:
-                    LossGrad_SmoothL1<<<CUDA_GET_BLOCKS(loss_numel), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,scale,in[0]->dataGPU,in[1]->dataGPU,(in.size()==3 ? in[2]->dataGPU : NULL),in[0]->diffGPU);
+                    LossGrad_SmoothL1<<<CUDA_GET_BLOCKS(loss_numel),
+                        CUDA_NUM_THREADS>>>(
+                            CUDA_GET_LOOPS(loss_numel),
+                            loss_numel, scale, in[0]->dataGPU, in[1]->dataGPU,
+                            (in.size()==3 ? in[2]->dataGPU : NULL),
+                            in[0]->diffGPU);
                     break;
                 case Contrastive:
-                    LossGrad_Contrastive<<<CUDA_GET_BLOCKS(numExamples), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(loss_numel),loss_numel,in[0]->dim[1],margin,scale,in[0]->dataGPU,in[1]->dataGPU,in[2]->dataGPU,in[0]->diffGPU,in[1]->diffGPU);
+                    LossGrad_Contrastive<<<CUDA_GET_BLOCKS(numExamples),
+                        CUDA_NUM_THREADS>>>(
+                            CUDA_GET_LOOPS(loss_numel),
+                            loss_numel, in[0]->dim[1], margin, scale,
+                            in[0]->dataGPU, in[1]->dataGPU, in[2]->dataGPU,
+                            in[0]->diffGPU, in[1]->diffGPU);
                     break;
                 case EuclideanSSE:
                     break;
@@ -4591,15 +4747,15 @@ public:
 };
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Add your new layers here
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Net
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Net{
 public:
@@ -4660,7 +4816,7 @@ public:
             else if (0==type.compare("ROI"))            pLayer = new ROILayer(p);
             else if (0==type.compare("ROIPooling"))     pLayer = new ROIPoolingLayer(p);
             else if (0==type.compare("Tensor"))         pLayer = new TensorLayer(p);
-            else if (0==type.compare("Loss"))       {   pLayer = new LossLayer(p); loss_layers.push_back((LossLayer*)pLayer);   }           
+            else if (0==type.compare("Loss"))       {   pLayer = new LossLayer(p); loss_layers.push_back((LossLayer*)pLayer);   }
             else { std::cout<<"ERROR: recognizable layer in JSON file: "<<type<<std::endl; FatalError(__LINE__);};
 
             pLayer->cudnnHandle = cudnnHandle;
@@ -4677,7 +4833,7 @@ public:
                         pResponse = addResponse(new Response(out[i]));
                         pResponse->cublasHandle = cublasHandle;
                     }
-                    pLayer->addOut(pResponse);              
+                    pLayer->addOut(pResponse);
                 }
             }
 
@@ -4689,7 +4845,7 @@ public:
                         pResponse = addResponse(new Response(in[i]));
                         pResponse->cublasHandle = cublasHandle;
                     }
-                    pLayer->addIn(pResponse);               
+                    pLayer->addIn(pResponse);
                 }
             }
         }
@@ -4762,7 +4918,7 @@ public:
     };
 
     void loadWeights(std::vector<Tensor<StorageT>*> weights, bool diff=false){
-        checkCUDA(__LINE__,cudaSetDevice(GPU));     
+        checkCUDA(__LINE__,cudaSetDevice(GPU));
         // let the layers find their weights based on their names
         for (int l=0; l<layers.size();++l){
             layers[l]->setWeights(weights);
@@ -4773,18 +4929,18 @@ public:
     void loadWeights(std::string filename, bool diff=false){
         std::cout<< "====================================================================================================================================="<<std::endl;
 
-        std::vector<Tensor<StorageT>*> weights = readTensors<StorageT>(filename);       
+        std::vector<Tensor<StorageT>*> weights = readTensors<StorageT>(filename);
         loadWeights(weights, diff);
 
         // release memory for the weights
         for (int i=0; i<weights.size();++i){
             delete weights[i];
         }
-    };  
+    };
 
     void saveWeights(std::string filename, bool diff=false){
         FILE* fp = fopen(filename.c_str(),"wb");
-        while (fp==NULL) { 
+        while (fp==NULL) {
             std::cerr<<"Net::saveWeights: fail to open file "<<filename<<". Please provide it first. Will retry after 5 seconds."<<std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(5));
             fp = fopen(filename.c_str(),"wb");
@@ -4816,7 +4972,7 @@ public:
         std::cout<< "GPU " << GPU << ": Total GPU memory: ";    memorySizePrint(memoryBytes);   std::cout<<std::endl;
 
         return memoryBytes;
-    };  
+    };
 
     void forward(){
         for (int l=0; l<layers.size();++l){
@@ -4842,7 +4998,7 @@ public:
                     }
                     std::cout<<std::endl; toc();
                 }
-            }               
+            }
         }
     };
 
@@ -4852,7 +5008,7 @@ public:
         }
 
         for (int l=layers.size()-1;l>=0; --l){
-            if (layers[l]->phase == phase || layers[l]->phase == TrainingTesting){              
+            if (layers[l]->phase == phase || layers[l]->phase == TrainingTesting){
 
                 if (debug_mode){
                     std::cout<<"[Backward] Layer["<<l<<"] "<<layers[l]->name;
@@ -4935,7 +5091,7 @@ public:
         for (int l=0; l<loss_layers.size();++l){
             loss_layers[l]->result /= train_iter;
             loss_layers[l]->loss   /= train_iter;
-        }       
+        }
 
         if(sync) checkCUDA(__LINE__,cudaDeviceSynchronize());
     };
@@ -4984,7 +5140,7 @@ public:
             // display
             std::cout << "Iteration " << iter << "  ";
             for (int i=0;i<loss_layers.size();++i){
-                if (loss_layers[i]->phase == phase || loss_layers[i]->phase == TrainingTesting){                
+                if (loss_layers[i]->phase == phase || loss_layers[i]->phase == TrainingTesting){
                     loss_layers[i]->display();
                 }
             }
@@ -5012,7 +5168,7 @@ public:
                 std::vector<int> dataDim;
                 dataDim.push_back(dataChannels);
                 dataDim.insert( dataDim.end(), receptive_field.begin(), receptive_field.end() );
-                
+
                 for (int j=0;j<responseChannels[i].size();++j){
                     int c = responseChannels[i][j];
                     if (c<0 || c >= r->dim[1]){
@@ -5026,7 +5182,7 @@ public:
 
                             if (scores[i][j].size()<topK || scoresLowest[i][j]< val){
                                 Tensor<StorageT>* toSave = new Tensor<StorageT>(dataDim);
-                                
+
                                 toSave->initialize(CPUCompute2StorageT(0));
 
                                 // copy the n-th, all channesl, all spatal
@@ -5168,7 +5324,7 @@ public:
             // display
             std::cout << "Iteration " << iter << "  ";
             for (int i=0;i<loss_layers.size();++i){
-                if (loss_layers[i]->phase == phase || loss_layers[i]->phase == TrainingTesting){                
+                if (loss_layers[i]->phase == phase || loss_layers[i]->phase == TrainingTesting){
                     loss_layers[i]->display();
                     result[i] += loss_layers[i]->result;
                 }
@@ -5260,9 +5416,9 @@ public:
 
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 // Solver
-////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Solver{
     bool singleGPU;
@@ -5459,7 +5615,7 @@ public:
 
         std::cout<< "====================================================================================================================================="<<std::endl;
         for (int n=0;n<nGPUs;++n){
-            if (memoryBytes[n]>0){          
+            if (memoryBytes[n]>0){
                 std::cout<< "GPU " << n << ": Total GPU memory: ";  memorySizePrint(memoryBytes[n]);    std::cout<<std::endl;
             }
         }
@@ -5525,7 +5681,7 @@ public:
         std::cout<< "====================================================================================================================================="<<std::endl;
 
         std::vector<Tensor<StorageT>*> weights = readTensors<StorageT>(filename);
-        
+
         for (int i=0;i<nets.size();++i){
             nets[i]->loadWeights(weights, diff);
         }
@@ -5549,15 +5705,15 @@ public:
         std::cout<< "====================================================================================================================================="<<std::endl;
         std::cout<< "  Training:                                                                      Testing:                                            "<<std::endl;
         std::cout<< "====================================================================================================================================="<<std::endl;
-        
+
         for (iter=iter_begin;iter<=max_iter;++iter){
 
             if (iter % test_interval==0){
                 if (debug_mode){
                     std::cout << "Testing Iteration " << iter << std::endl;
-                }else{              
+                }else{
                     std::cout<< "                                                                                 ";
-                    std::cout << "Iteration " << iter;              
+                    std::cout << "Iteration " << iter;
                 }
 
                 if (singleGPU){
@@ -5590,10 +5746,10 @@ public:
             }
 
             if (singleGPU){
-                nets[0]->stepTrain(false); 
-            }else{      
+                nets[0]->stepTrain(false);
+            }else{
                 for (int t=0; t<threads.size(); ++t){
-                    threads[t] = std::thread(&Net::stepTrain, nets[t], true);   //nets[t]->stepTrain(); 
+                    threads[t] = std::thread(&Net::stepTrain, nets[t], true);   //nets[t]->stepTrain();
                 }
                 for (int t=0; t<threads.size(); ++t){
                     threads[t].join();
@@ -5602,7 +5758,7 @@ public:
 
             ComputeT lrate = learning_rate();
             update(lrate);
-            checkCUDA(__LINE__,cudaDeviceSynchronize());            
+            checkCUDA(__LINE__,cudaDeviceSynchronize());
 
             if (iter!=iter_begin && iter % snapshot_iter==0){
                 saveWeights(path+"_snapshot_"+std::to_string(iter)+".marvin",false);
@@ -5616,7 +5772,7 @@ public:
                     nets[0]->eval(false);
                 }else{
                     for (int t=0; t<threads.size(); ++t){
-                        threads[t] = std::thread(&Net::eval, nets[t], true); //nets[t]->eval(); 
+                        threads[t] = std::thread(&Net::eval, nets[t], true); //nets[t]->eval();
                     }
                     for (int t=0; t<threads.size(); ++t){
                         threads[t].join();
