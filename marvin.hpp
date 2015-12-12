@@ -2450,6 +2450,8 @@ public:
               bias_diffGPU(NULL), bias_histGPU(NULL), weight_numel(0),
               bias_numel(0), weight_decay_mult(ComputeT(1)),
               bias_decay_mult(ComputeT(1)) {
+        checkCUDNN(__LINE__, cudnnCreate(&cudnnHandle));
+        checkCUBLAS(__LINE__, cublasCreate(&cublasHandle));
         std::random_device rd;
         rng.seed(rd());
     };
@@ -2461,6 +2463,8 @@ public:
                                bias_histGPU(NULL), weight_numel(0),
                                bias_numel(0), weight_decay_mult(ComputeT(1)),
                                bias_decay_mult(ComputeT(1)) {
+        checkCUDNN(__LINE__, cudnnCreate(&cudnnHandle));
+        checkCUBLAS(__LINE__, cublasCreate(&cublasHandle));
         std::random_device rd;
         rng.seed(rd());
     };
