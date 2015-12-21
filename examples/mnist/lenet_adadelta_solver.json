@@ -1,0 +1,146 @@
+{
+	"train":
+		{
+			"path": "examples/mnist/lenet",
+			"solver": "AdaDelta",
+			"regularizer": "L2",
+			"momentum": 0.95,
+			"delta": 0.000001,
+			"weight_decay": 0.0005,
+			"base_lr": 1.0,
+			"lr_policy": "LR_inv",
+			"lr_gamma": 0.0001,
+			"lr_power": 0.75,
+			"max_iter": 10000,
+			"train_iter": 1,
+			"snapshot_iter": 5000,
+			"display_iter": 10,
+			"test_iter": 10,
+			"test_interval": 500,
+			"debug_mode": false,
+			"GPU_solver": 0,
+			"GPU": [0]
+		},
+	"test":
+		{
+			"debug_mode": false,
+			"GPU": 0
+		},
+	"layers":[
+		{
+			"type": "MemoryData",
+			"name": "dataTrain",
+			"phase": "Training",
+			"file_data": "examples/mnist/train-images.tensor",
+			"file_label": "examples/mnist/train-labels.tensor",
+			"batch_size": 64,
+			"out": ["data","label"]
+		},
+		{
+			"type": "MemoryData",
+			"name": "dataTest",
+			"phase": "Testing",
+			"file_data": "examples/mnist/test-images.tensor",
+			"file_label": "examples/mnist/test-labels.tensor",
+			"batch_size": 64,
+			"out": ["data","label"]
+		},
+		{
+			"in": ["data"],
+			"type": "Convolution",
+			"name": "conv1",
+			"num_output": 20,
+			"window": [5,5],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv1"]
+		},
+		{
+			"in": ["conv1"],
+			"type": "Pooling",
+			"name": "pool1",
+			"mode": "max",
+			"window": [2,2],
+			"padding": [0,0],
+			"stride": [2,2],
+			"out": ["pool1"]
+		},
+		{
+			"in": ["pool1"],
+			"type": "Convolution",
+			"name": "conv2",
+			"num_output": 50,
+			"window": [5,5],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv2"]
+		},
+		{
+			"in": ["conv2"],
+			"type": "Pooling",
+			"name": "pool2",
+			"mode": "max",
+			"window": [2,2],
+			"padding": [0,0],
+			"stride": [2,2],
+			"out": ["pool2"]
+		},
+		{
+			"in": ["pool2"],
+			"type": "InnerProduct",
+			"name": "ip1",
+			"num_output": 500,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["ip1"]
+		},
+		{
+			"in": ["ip1"],
+			"type": "Activation",
+			"name": "relu1",
+			"mode": "ReLU",
+			"out": ["ip1"]
+		},
+		{
+			"in": ["ip1"],
+			"type": "InnerProduct",
+			"name": "ip2",
+			"num_output": 10,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["prob"]
+		},
+		{
+			"in": ["prob"],
+			"type": "Softmax",
+			"stable_gradient": true,
+			"name": "prob",
+			"out": ["prob"]
+		},
+		{
+			"in": ["prob","label"],
+			"type": "Loss",
+			"name": "loss",
+			"mode": "MultinomialLogistic_StableSoftmax",
+			"loss_weight": 1.0
+		}
+	]
+}
