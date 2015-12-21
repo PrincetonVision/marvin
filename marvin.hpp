@@ -1298,6 +1298,22 @@ void GPU_set_ones(size_t N, StorageT* GPUdst){
     GPU_set_value(N, GPUdst, CPUCompute2StorageT(1));
 }
 
+__global__ void Kernel_dropout_forward(size_t CUDA_NUM_LOOPS, size_t N, StorageT* GPUdst, const unsigned int* GPUmask, const StorageT* GPUsrc, unsigned int threshold, ComputeT scale){
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+    if (idxBase >= N) return;
+    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+        GPUdst[idx] = GPUCompute2StorageT( (GPUmask[idx]>threshold) * scale * GPUStorage2ComputeT(GPUsrc[idx]));
+    }
+}
+
+__global__ void Kernel_dropout_backward(size_t CUDA_NUM_LOOPS, size_t N, StorageT* GPUdst, const unsigned int* GPUmask, const StorageT* GPUsrc, unsigned int threshold, ComputeT scale){
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
+    if (idxBase >= N) return;
+    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+        GPUdst[idx] = GPUCompute2StorageT( ((GPUmask[idx]>threshold) * scale * GPUStorage2ComputeT(GPUsrc[idx])) + GPUStorage2ComputeT(GPUdst[idx]) );
+    }
+}
+
 __global__ void Kernel_elementwise_multiplication(size_t CUDA_NUM_LOOPS, size_t N, StorageT* GPUdst, const StorageT* GPUsrcA, const StorageT* GPUsrcB){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
@@ -3925,126 +3941,86 @@ public:
 
 class DropoutLayer: public Layer{
     ComputeT scale;
-    std::bernoulli_distribution* distribution;
-    std::future<void> lock;
-    bool current_mask;
-    std::vector< StorageT* > GPUmask[2];
-    std::vector< StorageT* > CPUmask;
+    unsigned int threshold;
+    std::vector< unsigned int * > GPUmask;
     std::vector<int > BYTESmask;
     std::vector<int > SIZEmask;
+    curandGenerator_t generator;
 public:
     ComputeT dropout_rate;
-
     void init(){
-        current_mask = true;
-        distribution = new std::bernoulli_distribution(dropout_rate);
         scale = 1. / (1. - dropout_rate);
+        threshold = ComputeT(UINT_MAX) * dropout_rate;
+        std::random_device rd;
+        if ( curandCreateGenerator(&generator,CURAND_RNG_PSEUDO_DEFAULT) != CURAND_STATUS_SUCCESS || curandSetPseudoRandomGeneratorSeed(generator,rd())!= CURAND_STATUS_SUCCESS ){
+            std::cerr<<"Cannot initialize Curand"<<std::endl;
+            FatalError(__LINE__);
+        }
     };
-
     DropoutLayer(std::string name_, ComputeT dropout_rate_): Layer(name_), dropout_rate(dropout_rate_){
         init();
     };
-
     DropoutLayer(JSON* json){
         SetOrDie(json, name)
         SetValue(json, phase,               TrainingTesting)
         SetValue(json, dropout_rate,        0.5)
         init();
     };
-
-    void generateMask(){
-        checkCUDA(__LINE__,cudaSetDevice(GPU));
-        StorageT zeroStorageT = CPUCompute2StorageT(ComputeT(0));
-        StorageT scaleStorageT = CPUCompute2StorageT(scale);
-        for (int i=0;i<CPUmask.size();++i){
-            for (StorageT* p=CPUmask[i];p != CPUmask[i]+SIZEmask[i];++p){
-                if ((*distribution)(rng))
-                    *p = scaleStorageT;
-                else
-                    *p = zeroStorageT;
-            }
-            checkCUDA(__LINE__,cudaMemcpy(GPUmask[!current_mask][i], CPUmask[i], SIZEmask[i]*sizeofStorageT, cudaMemcpyHostToDevice));
-        }
-    };
-
     size_t Malloc(Phase phase_){
         size_t memoryBytes = 0;
         std::cout<< (train_me? "* " : "  ");
         std::cout<<name<<std::endl;
-
         if (in.size()==0) { std::cout<<std::endl<<"DropoutLayer in shouldn't be empty"<<std::endl; FatalError(__LINE__); }
         if (in.size()!=out.size()) { std::cout<<std::endl<<"DropoutLayer #in should be the same as #out"<<std::endl; FatalError(__LINE__); }
-
-        GPUmask[0].resize(out.size());
-        GPUmask[1].resize(out.size());
-        CPUmask.resize(out.size());
+        GPUmask.resize(out.size());
         BYTESmask.resize(out.size());
         SIZEmask.resize(out.size());
-
         for (int i=0;i<out.size();++i){
             SIZEmask [i] = numel(in[i]->dim);
-
-            BYTESmask[i] = sizeofStorageT * SIZEmask[i];
-
-            memoryBytes += BYTESmask[i]*2;
-            checkCUDA(__LINE__, cudaMalloc(&GPUmask[0][i], BYTESmask[i]) );
-            checkCUDA(__LINE__, cudaMalloc(&GPUmask[1][i], BYTESmask[i]) );
-            CPUmask[i] = new StorageT[SIZEmask[i]];
-
+            BYTESmask[i] = sizeof(unsigned int) * SIZEmask[i];
+            memoryBytes += BYTESmask[i];
+            checkCUDA(__LINE__, cudaMalloc(&GPUmask[i], BYTESmask[i]) );
             out[i]->need_diff = in[i]->need_diff;
             out[i]->receptive_field = in[i]->receptive_field;
             out[i]->receptive_gap = in[i]->receptive_gap;
             out[i]->receptive_offset = in[i]->receptive_offset;
             memoryBytes += out[i]->Malloc(in[i]->dim);
         }
-
-        lock = std::async(std::launch::async,&DropoutLayer::generateMask,this);
-
         return memoryBytes;
     };
-
     ~DropoutLayer(){
-        if (lock.valid()) lock.wait();
-        for (int i=0;i<GPUmask[0].size();++i){
-            checkCUDA(__LINE__, cudaFree(GPUmask[0][i]) );
-            checkCUDA(__LINE__, cudaFree(GPUmask[1][i]) );
-            delete [] CPUmask[i];
+        for (int i=0;i<GPUmask.size();++i){
+            checkCUDA(__LINE__, cudaFree(GPUmask[i]) );
         }
-        delete distribution;
     };
-
     void forward(Phase phase_){
         if ( phase_==Training ){
-            lock.wait();
-            current_mask = !current_mask;
-            lock = std::async(std::launch::async,&DropoutLayer::generateMask,this);
             for (int i=0;i<in.size();++i){
-                // zeros out some elements
-                GPU_elementwise_multiplication(SIZEmask[i], out[i]->dataGPU, GPUmask[current_mask][i], in[i]->dataGPU);
+                curandGenerate(generator, GPUmask[i], SIZEmask[i]);
+                Kernel_dropout_forward<<<CUDA_GET_BLOCKS(SIZEmask[i]), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(SIZEmask[i]),SIZEmask[i],out[i]->dataGPU, GPUmask[i], in[i]->dataGPU, threshold, scale);
+                checkCUDA(__LINE__,cudaGetLastError());
             }
-
         }else{
             for (int i=0;i<in.size();++i){
                 if (out[i]!=in[i]){
-                    checkCUDA(__LINE__,cudaMemcpy(out[i]->dataGPU, in[i]->dataGPU, BYTESmask[i], cudaMemcpyDeviceToDevice));
+                    checkCUDA(__LINE__,cudaMemcpy(out[i]->dataGPU, in[i]->dataGPU, sizeofStorageT*SIZEmask[i], cudaMemcpyDeviceToDevice));
                 }
             }
         }
     };
-
     void backward(Phase phase_){
         if ( phase_==Training ){
             for (int i=0;i<in.size();++i){
-                // if bottom still needs to compute gradients
                 if (in[i]->need_diff){
-                    // out[i]->diffGPU + in[i]->dataGPU => in[i]->diffGPU
-                    GPU_elementwise_multiplication(SIZEmask[i], in[i]->diffGPU, GPUmask[current_mask][i], out[i]->diffGPU);
+                    Kernel_dropout_backward<<<CUDA_GET_BLOCKS(SIZEmask[i]), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(SIZEmask[i]),SIZEmask[i],out[i]->dataGPU, GPUmask[i], in[i]->dataGPU, threshold, scale);
                 }
             }
         }else{
+            std::cerr<<"there should be no backward for testing"<<std::endl;
+            FatalError(__LINE__);
             for (int i=0;i<in.size();++i){
                 if (out[i]!=in[i]){
-                    checkCUDA(__LINE__,cudaMemcpy(in[i]->diffGPU, out[i]->diffGPU, BYTESmask[i], cudaMemcpyDeviceToDevice));
+                    checkCUDA(__LINE__,cudaMemcpy(in[i]->diffGPU, out[i]->diffGPU, sizeofStorageT*SIZEmask[i], cudaMemcpyDeviceToDevice));
                 }
             }
         }
