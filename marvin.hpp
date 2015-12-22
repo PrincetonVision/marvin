@@ -3611,7 +3611,8 @@ public:
                                                     &padding[0],
                                                     &stride[0],
                                                     &upscale[0],
-                                                    CUDNN_CROSS_CORRELATION) );
+                                                    CUDNN_CROSS_CORRELATION,
+                                                    CUDNNStorageT) );
 
         std::vector<int> bias_stride(bias_dim.size());
 
@@ -3742,7 +3743,6 @@ public:
                                                         &out_dim_bug[0],
                                                         &strideA[0]) );
                 checkCUDNN(__LINE__,cudnnAddTensor(cudnnHandle,
-                                              CUDNN_ADD_SAME_C,
                                               one,
                                               bias_desc_bug,
                                               bias_dataGPU,
@@ -3764,6 +3764,7 @@ public:
                                                               filter_desc, weight_dataGPU + (g * weight_numel / group),
                                                               out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                               conv_desc,
+                                                              CUDNN_CONVOLUTION_BWD_DATA_ALGO_0, NULL, 0,
                                                               one,
                                                               in[i]->getDesc(group), in[i]->diffGPU + (g * in[i]->sizeofitem() / group)));
                 }
@@ -3780,6 +3781,7 @@ public:
                                                                   in[i]->getDesc(group), in[i]->dataGPU + (g * in[i]->sizeofitem() / group),
                                                                   out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                                   conv_desc,
+                                                                  CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0, NULL, 0,
                                                                   &beta,
                                                                   filter_desc, weight_diffGPU + (g * weight_numel / group)));
                     }
