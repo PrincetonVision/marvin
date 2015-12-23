@@ -31,8 +31,7 @@
 			"type": "MemoryData",
 			"name": "dataTrain",
 			"phase": "Training",
-			"file_data": "examples/mnist/train-images.tensor",
-			"file_label": "examples/mnist/train-labels.tensor",
+			"file_data": ["examples/mnist/train-images.tensor", "examples/mnist/train-labels.tensor"],
 			"batch_size": 64,
 			"out": ["data","label"]
 		},
@@ -40,8 +39,7 @@
 			"type": "MemoryData",
 			"name": "dataTest",
 			"phase": "Testing",
-			"file_data": "examples/mnist/test-images.tensor",
-			"file_label": "examples/mnist/test-labels.tensor",
+			"file_data": ["examples/mnist/test-images.tensor","examples/mnist/test-labels.tensor"],
 			"batch_size": 64,
 			"out": ["data","label"]
 		},
