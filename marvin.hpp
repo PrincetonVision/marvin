@@ -12,6 +12,7 @@
     #define sizeofStorageT 2
     #define sizeofComputeT 4
     #define CUDNNStorageT CUDNN_DATA_HALF
+    #define CUDNNConvStorageT CUDNN_DATA_FLOAT
     #define CPUStorage2ComputeT(x) (cpu_half2float(x))
     #define CPUCompute2StorageT(x) (cpu_float2half(x))
     #define GPUStorage2ComputeT(x) (__half2float(x))
@@ -28,6 +29,7 @@
     #define sizeofStorageT 4
     #define sizeofComputeT 4
     #define CUDNNStorageT CUDNN_DATA_FLOAT
+    #define CUDNNConvStorageT CUDNN_DATA_FLOAT
     #define CPUStorage2ComputeT(x) (x)
     #define CPUCompute2StorageT(x) (x)
     #define GPUStorage2ComputeT(x) (x)
@@ -43,6 +45,7 @@
     #define sizeofStorageT 8
     #define sizeofComputeT 8
     #define CUDNNStorageT CUDNN_DATA_DOUBLE
+    #define CUDNNConvStorageT CUDNN_DATA_DOUBLE
     #define CPUStorage2ComputeT(x) (x)
     #define CPUCompute2StorageT(x) (x)
     #define GPUStorage2ComputeT(x) (x)
@@ -387,7 +390,7 @@ public:
         else variable = this->member[name]->returnBool();
     };
 
-    void setOrDie(std::string name, std::vector<float> &variable){
+    void setOrDie(std::string name, std::vector<ComputeT> &variable){
         if (this->member.find(name) == this->member.end())
             FatalError(__LINE__);
         else variable = this->member[name]->returnRealVector();
@@ -3611,7 +3614,8 @@ public:
                                                     &padding[0],
                                                     &stride[0],
                                                     &upscale[0],
-                                                    CUDNN_CROSS_CORRELATION) );
+                                                    CUDNN_CROSS_CORRELATION,
+                                                    CUDNNConvStorageT) );
 
         std::vector<int> bias_stride(bias_dim.size());
 
@@ -3742,7 +3746,6 @@ public:
                                                         &out_dim_bug[0],
                                                         &strideA[0]) );
                 checkCUDNN(__LINE__,cudnnAddTensor(cudnnHandle,
-                                              CUDNN_ADD_SAME_C,
                                               one,
                                               bias_desc_bug,
                                               bias_dataGPU,
@@ -3764,6 +3767,7 @@ public:
                                                               filter_desc, weight_dataGPU + (g * weight_numel / group),
                                                               out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                               conv_desc,
+                                                              CUDNN_CONVOLUTION_BWD_DATA_ALGO_0, NULL, 0,
                                                               one,
                                                               in[i]->getDesc(group), in[i]->diffGPU + (g * in[i]->sizeofitem() / group)));
                 }
@@ -3780,6 +3784,7 @@ public:
                                                                   in[i]->getDesc(group), in[i]->dataGPU + (g * in[i]->sizeofitem() / group),
                                                                   out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                                   conv_desc,
+                                                                  CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0, NULL, 0,
                                                                   &beta,
                                                                   filter_desc, weight_diffGPU + (g * weight_numel / group)));
                     }
