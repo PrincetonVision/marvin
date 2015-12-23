@@ -4,15 +4,16 @@ Marvin is a GPU-only neural network framework made with simplicity, hackability,
 
 ## Dependences
 
-Download [CUDA 7.5](https://developer.nvidia.com/cuda-downloads) and [cuDNN 3](https://developer.nvidia.com/cudnn). You will need to register with NVIDIA. Below are some additional steps to set up cuDNN 3:
+Download [CUDA 7.5](https://developer.nvidia.com/cuda-downloads) and [cuDNN 4rc](https://developer.nvidia.com/cudnn). You will need to register with NVIDIA. Below are some additional steps to set up cuDNN 4rc. **NOTE** We highly recommend that you install different versions of cuDNN to different directories (e.g., ```/usr/local/cudnn/vXX```) because different software packages may require different versions.
 
 ```shell
-CUDA_LIB_DIR=/usr/local/cuda/lib$([[ $(uname) == "Linux" ]] && echo 64)
-echo LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_LIB_DIR >> ~/.profile && ~/.profile
+LIB_DIR=lib$([[ $(uname) == "Linux" ]] && echo 64)
+CUDNN_LIB_DIR=/usr/local/cudnn/v4rc/$LIB_DIR
+echo LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDNN_LIB_DIR >> ~/.profile && ~/.profile
 
 tar zxvf cudnn*.tgz
-sudo cp cuda/lib/* $CUDA_LIB_DIR
-sudo cp cuda/include/* /usr/local/cuda/include
+sudo cp cuda/$LIB_DIR/* $CUDNN_LIB_DIR/
+sudo cp cuda/include/* /usr/local/cudnn/v4rc/include/
 ```
 
 ## Compilation
