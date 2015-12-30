@@ -34,8 +34,7 @@
                 227,
                 227
             ],
-            "file_data":"data/places/train_data.tensor",
-            "file_label":"data/places/train_label.tensor",
+            "file_data":["data/places/train_data.tensor","data/places/train_label.tensor"],
             "file_mean":"data/places/train_mean_256.tensor",
             "batch_size":256,
             "out":[
@@ -52,8 +51,7 @@
                 227,
                 227
             ],
-            "file_data":"data/places/val_data.tensor",
-            "file_label":"data/places/val_label.tensor",
+            "file_data":["data/places/val_data.tensor","data/places/val_label.tensor"],
             "file_mean":"data/places/train_mean_256.tensor",
             "batch_size":256,
             "out":[
