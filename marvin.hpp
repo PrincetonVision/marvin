@@ -89,7 +89,7 @@ namespace marvin {
 // Type definition
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum Filler { Xavier, Gaussian, Constant };
+enum Filler { Xavier, Gaussian, Constant, Uniform };
 enum Pool { Max, Average, Sum };
 enum LossObjective { MultinomialLogistic_StableSoftmax, MultinomialLogistic, SmoothL1, Contrastive, EuclideanSSE, HingeL1, HingeL2, SigmoidCrossEntropy, Infogain };
 enum Phase { Training, Testing, TrainingTesting };
@@ -476,6 +476,7 @@ public:
         else if (0 == this->member[name]->returnString().compare("Xavier"))             variable = Xavier;
         else if (0 == this->member[name]->returnString().compare("Gaussian"))           variable = Gaussian;
         else if (0 == this->member[name]->returnString().compare("Constant"))           variable = Constant;
+        else if (0 == this->member[name]->returnString().compare("Uniform"))            variable = Uniform;
         else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
     };
 
@@ -1862,7 +1863,6 @@ __global__ void Kernel_update_AdaDeltaL1(size_t CUDA_NUM_LOOPS, size_t N, int nN
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -1888,7 +1888,6 @@ __global__ void Kernel_update_AdaDeltaL2(size_t CUDA_NUM_LOOPS, size_t N, int nN
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -1946,7 +1945,6 @@ __global__ void Kernel_update_AdamL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -1969,7 +1967,6 @@ __global__ void Kernel_update_AdamL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -1989,7 +1986,6 @@ __global__ void Kernel_update_NAGL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, 
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g;
@@ -2009,7 +2005,6 @@ __global__ void Kernel_update_NAGL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, 
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g  = decay * w;     // L2 regularization
@@ -2026,7 +2021,6 @@ __global__ void Kernel_update_RMSpropL1(size_t CUDA_NUM_LOOPS, size_t N, int nNe
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g;
@@ -2045,7 +2039,6 @@ __global__ void Kernel_update_RMSpropL2(size_t CUDA_NUM_LOOPS, size_t N, int nNe
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g  = decay * w;     // L2 regularization
@@ -2726,6 +2719,15 @@ public:
         delete feature;
     };
 
+    void print(bool printData=true){
+        if (!printData && diffGPU==NULL) return;
+        Tensor<StorageT>* feature = new Tensor<StorageT>(dim);
+        feature->readGPU((printData? dataGPU: diffGPU));
+        std::vector<int> display_dim;
+        display_dim.push_back(min(size_t(100),numel(dim)));
+        feature->print(display_dim);
+        delete feature;
+    };
 
     int checkNaN(){
         return marvin::checkNaN(dataGPU, numel(dim));
@@ -2933,6 +2935,14 @@ public:
                 StorageT paramStorageT = CPUCompute2StorageT(param);
                 for (StorageT *p = CPUbuf; p != CPUbuf + n; ++p) {
                     *p = paramStorageT;
+                }
+            }
+            break;
+            case Uniform: {
+                std::uniform_real_distribution<ComputeT> distribution(-param,
+                                                                      param);
+                for (StorageT *p = CPUbuf; p != CPUbuf + n; ++p) {
+                    *p = CPUCompute2StorageT(distribution(rng));
                 }
             }
             break;
@@ -3224,6 +3234,8 @@ public:
     std::string result;
     std::string map2char;
     Tensor<char>* tensor2char;
+    bool random;
+    ComputeT temperature;
 
     SequenceGenerationLayer(std::string name_): DataLayer(name_), resultResponse(NULL), tensor2char(NULL), iter(0){
         train_me = false;
@@ -3236,6 +3248,8 @@ public:
         SetOrDie(json, length       )
         SetOrDie(json, seed         )
         SetOrDie(json, result       )
+        SetValue(json, random,      true)
+        SetValue(json, temperature, 1)
 
         train_me = false;
     };
@@ -3260,18 +3274,30 @@ public:
         }else{
             GPU_set_ones(1, out[1]->dataGPU);
 
-            size_t maxID;
-            ComputeT maxValue;
-            GPU_maxElement(channel, resultResponse->dataGPU, &maxID, &maxValue);
+            size_t chosenID;
 
-            //maxID = iter%65;
-            //std::cout<<"CPU maxID="<<maxID<<std::endl;
+            if (random){
+                int num_classes = numel(resultResponse->dim);
 
-            //FatalError(__LINE__);
-            //std::cout<<maxID<<" "<<maxValue<<std::endl;
-            std::cout<<tensor2char->CPUmem[maxID];
+                std::vector<StorageT> probCPUs;  probCPUs.resize(num_classes);
+                checkCUDA(__LINE__, cudaMemcpy(probCPUs.data(), resultResponse->dataGPU, num_classes * sizeofStorageT, cudaMemcpyDeviceToHost));
 
-            GPU_set_one_hot(channel, out[0]->dataGPU, maxID);
+                std::vector<double> probCPU;   probCPU .resize(num_classes);
+                for (int i=0;i<num_classes;++i) probCPU[i]=double(temperature * exp(CPUStorage2ComputeT(probCPUs[i])));
+
+                std::discrete_distribution<int> d(probCPU.begin(),probCPU.end());
+                chosenID = d(rng);
+
+                //std::cout<<std::endl<<"chosenID="<<chosenID<<std::endl;
+            }else{            
+                size_t maxID;
+                ComputeT maxValue;
+                GPU_maxElement(channel, resultResponse->dataGPU, &maxID, &maxValue);
+                chosenID = maxID;
+            }
+
+            std::cout<<tensor2char->CPUmem[chosenID];
+            GPU_set_one_hot(channel, out[0]->dataGPU, chosenID);
         }
 
         ++iter;
@@ -4678,21 +4704,19 @@ public:
                 if (shape[d]==0){
                     dim.push_back(in[i]->dim[d]);
                 }else if (shape[d]==-1){
-                    dim.push_back(-1);
+                    dim.push_back(1);
                 }else{
                     dim.push_back(shape[d]);
                 }
             }
             int remain = numel(in[i]->dim)/numel(dim);
             if (remain!=1){
-                remain = -remain;
                 for(int d=0;d<dim.size();++d){
-                    if (dim[d]==-1){
+                    if (shape[d] == -1){
                         dim[d] = remain;
                     }
                 }
             }
-
             out[i]->receptive_field = in[i]->receptive_field;
             out[i]->receptive_gap = in[i]->receptive_gap;
             out[i]->receptive_offset = in[i]->receptive_offset;
@@ -5447,7 +5471,6 @@ public:
         return memoryBytes;
     };
     ~LSTMUnitLayer(){
-        
         if (X_acts_diff!=NULL)  checkCUDA(__LINE__, cudaFree(X_acts_diff));
     };
     void forward(Phase phase_){
@@ -5530,7 +5553,7 @@ public:
         dim.push_back(batch_size_N);
         dim.push_back(num_output);
 
-        Response* pResponse_h_0 = new Response("h_0", train_me);
+        Response* pResponse_h_0 = new Response(name+"_h_0", train_me);
         pResponse_h_0->cublasHandle = cublasHandle;
         pResponse_h_0->Malloc(dim);
         responses_h_.push_back(pResponse_h_0);
@@ -5538,7 +5561,7 @@ public:
         // slice out[0] into h_[1...T]
         size_t items_h_t = numel(dim);
         for (int t=1;t<seq_length_T+1;++t){
-            Response* pResponse_h_t = new Response("h_"+int_to_str(t), train_me);
+            Response* pResponse_h_t = new Response(name+"_h_"+int_to_str(t), train_me);
             pResponse_h_t->cublasHandle = cublasHandle;
             pResponse_h_t->Malloc(dim, out[0]->dataGPU + items_h_t * (t-1), out[0]->diffGPU + items_h_t * (t-1));
             responses_h_.push_back(pResponse_h_t);
@@ -5550,7 +5573,7 @@ public:
         size_t items_cont_t = numel(dim); //in[1]->sizeofitem();
         //std::cout<<"bytes_cont_t="<<bytes_cont_t<<std::endl;
         for (int t=0;t<seq_length_T;++t){
-            Response* pResponse_cont_t = new Response("cont_"+int_to_str(t), false);
+            Response* pResponse_cont_t = new Response(name+"_cont_"+int_to_str(t), false);
             pResponse_cont_t->cublasHandle = cublasHandle;
             pResponse_cont_t->Malloc(dim, in[1]->dataGPU + items_cont_t*t, NULL);
             //std::cout<<"pResponse_cont_t="<<pResponse_cont_t->dataGPU<<std::endl;
@@ -5568,12 +5591,12 @@ public:
 
         // Add layer to transform all timesteps of x to the hidden state dimension.
         //     W_xc_x = W_xc * x + b_c
-        pLayer_x_transform = new InnerProductLayer("x_transform", num_output*4, true, weight_lr_mult, weight_filler, weight_filler_param, bias_lr_mult, bias_filler, bias_filler_param);
+        pLayer_x_transform = new InnerProductLayer(name+"_x_transform", num_output*4, true, weight_lr_mult, weight_filler, weight_filler_param, bias_lr_mult, bias_filler, bias_filler_param);
         pLayer_x_transform->cudnnHandle = cudnnHandle;
         pLayer_x_transform->cublasHandle = cublasHandle;
         pLayer_x_transform->GPU = GPU;
         pLayer_x_transform->addIn(in0);
-        pResponse_W_xc_x = new Response("W_xc_x", train_me);
+        pResponse_W_xc_x = new Response(name+"_W_xc_x", train_me);
         pResponse_W_xc_x->cublasHandle = cublasHandle;
         pLayer_x_transform->addOut(pResponse_W_xc_x);
         memoryBytes += pLayer_x_transform->Malloc(phase_);
@@ -5586,7 +5609,7 @@ public:
         dim.push_back(num_output*4);
         size_t items_W_xc_x_t = numel(dim);
         for (int t=0;t<seq_length_T;++t){
-            Response* pResponse_W_xc_x_t = new Response("W_xc_x_"+int_to_str(t), train_me);
+            Response* pResponse_W_xc_x_t = new Response(name+"_W_xc_x_"+int_to_str(t), train_me);
             pResponse_W_xc_x_t->cublasHandle = cublasHandle;
             pResponse_W_xc_x_t->Malloc(dim, pResponse_W_xc_x->dataGPU + items_W_xc_x_t*t, pResponse_W_xc_x->diffGPU  + items_W_xc_x_t*t);
             responses_W_xc_x_.push_back(pResponse_W_xc_x_t);
@@ -5595,12 +5618,12 @@ public:
         if (in.size()>2){
             // Add layer to transform x_static to the gate dimension.
             //     W_xc_x_static = W_xc_static * x_static
-            pLayer_x_static_transform = new InnerProductLayer("W_xc_x_static", num_output*4, false, weight_lr_mult, weight_filler, weight_filler_param, bias_lr_mult, bias_filler, bias_filler_param);
+            pLayer_x_static_transform = new InnerProductLayer(name+"_W_xc_x_static", num_output*4, false, weight_lr_mult, weight_filler, weight_filler_param, bias_lr_mult, bias_filler, bias_filler_param);
             pLayer_x_static_transform->cudnnHandle = cudnnHandle;
             pLayer_x_static_transform->cublasHandle = cublasHandle;
             pLayer_x_static_transform->GPU = GPU;
             pLayer_x_static_transform ->addIn(this->in[2]);
-            pResponse_W_xc_x_static = new Response("W_xc_x_static", train_me);
+            pResponse_W_xc_x_static = new Response(name+"_W_xc_x_static", train_me);
             pResponse_W_xc_x_static->cublasHandle = cublasHandle;
             pLayer_x_static_transform ->addOut(pResponse_W_xc_x_static);
             memoryBytes += pLayer_x_static_transform->Malloc(phase_);
@@ -5613,7 +5636,7 @@ public:
         dim.push_back(num_output);
         // all c
         for (int t=0;t<seq_length_T+1;++t){
-            Response* pResponse_c_t = new Response("c_"+int_to_str(t), train_me);
+            Response* pResponse_c_t = new Response(name+"_c_"+int_to_str(t), train_me);
             pResponse_c_t->cublasHandle = cublasHandle;
             pResponse_c_t->Malloc(dim);
             responses_c_.push_back(pResponse_c_t);
@@ -5625,7 +5648,7 @@ public:
         dim.push_back(1);
         // all h_conted_
         for (int t=0;t<seq_length_T;++t){
-            Response* pResponse_h_conted_t = new Response("h_conted_"+int_to_str(t), train_me);
+            Response* pResponse_h_conted_t = new Response(name+"_h_conted_"+int_to_str(t), train_me);
             pResponse_h_conted_t->cublasHandle = cublasHandle;
             pResponse_h_conted_t->Malloc(dim);
             responses_h_conted_.push_back(pResponse_h_conted_t);
@@ -5639,7 +5662,7 @@ public:
         dim.push_back(num_output*4);
         //responses_W_hc_h_
         for (int t=0;t<seq_length_T;++t){
-            Response* pResponse_W_hc_h_t = new Response("W_hc_h_"+int_to_str(t), train_me);
+            Response* pResponse_W_hc_h_t = new Response(name+"_W_hc_h_"+int_to_str(t), train_me);
             pResponse_W_hc_h_t->cublasHandle = cublasHandle;
             pResponse_W_hc_h_t->Malloc(dim);
             responses_W_hc_h_.push_back(pResponse_W_hc_h_t);
@@ -5652,7 +5675,7 @@ public:
 
         //responses_gate_input_
         for (int t=0;t<seq_length_T;++t){
-            Response* pResponse_gate_input_t = new Response("gate_input_"+int_to_str(t), train_me);
+            Response* pResponse_gate_input_t = new Response(name+"_gate_input_"+int_to_str(t), train_me);
             pResponse_gate_input_t->cublasHandle = cublasHandle;
             pResponse_gate_input_t->Malloc(dim);
             responses_gate_input_.push_back(pResponse_gate_input_t);
@@ -5673,7 +5696,7 @@ public:
         // Normally, cont_t is binary (i.e., 0 or 1), so:
         //     h_conted_{t-1} := h_{t-1} if cont_t == 1
         //                       0   otherwise
-        pLayer_h_conted = new ElementWiseLayer("h_conted", ElementWise_SUM, true);
+        pLayer_h_conted = new ElementWiseLayer(name+"_h_conted", ElementWise_SUM, true);
         pLayer_h_conted->cudnnHandle = cudnnHandle;
         pLayer_h_conted->cublasHandle = cublasHandle;
         pLayer_h_conted->GPU = GPU;
@@ -5685,7 +5708,7 @@ public:
 
         // Add layer to compute
         //     W_hc_h_{t-1} := W_hc * h_conted_{t-1}
-        pLayer_transform = new InnerProductLayer("transform", num_output*4, false, weight_lr_mult, weight_filler, weight_filler_param, bias_lr_mult, bias_filler, bias_filler_param);
+        pLayer_transform = new InnerProductLayer(name+"_transform", num_output*4, false, weight_lr_mult, weight_filler, weight_filler_param, bias_lr_mult, bias_filler, bias_filler_param);
         pLayer_transform->cudnnHandle = cudnnHandle;
         pLayer_transform->cublasHandle = cublasHandle;
         pLayer_transform->GPU = GPU;                    
@@ -5697,7 +5720,7 @@ public:
         // Add the outputs of the linear transformations to compute the gate input.
         //     gate_input_t := W_hc * h_conted_{t-1} + W_xc * x_t + b_c
         //                   = W_hc_h_{t-1} + W_xc_x_t + b_c
-        pLayer_gate_input = new ElementWiseLayer("gate_input", ElementWise_SUM);
+        pLayer_gate_input = new ElementWiseLayer(name+"_gate_input", ElementWise_SUM);
         pLayer_gate_input->cudnnHandle = cudnnHandle;
         pLayer_gate_input->cublasHandle = cublasHandle;
         pLayer_gate_input->GPU = GPU;                    
@@ -5723,7 +5746,7 @@ public:
         //         g_t := \tanh[g_t']
         //         c_t := cont_t * (f_t .* c_{t-1}) + (i_t .* g_t)
         //         h_t := o_t .* \tanh[c_t]
-        pLayer_lstm_unit = new LSTMUnitLayer("lstm_unit");
+        pLayer_lstm_unit = new LSTMUnitLayer(name+"_lstm_unit");
         pLayer_lstm_unit->cudnnHandle = cudnnHandle;
         pLayer_lstm_unit->cublasHandle = cublasHandle;
         pLayer_lstm_unit->GPU = GPU;                    
@@ -5775,17 +5798,17 @@ public:
     };
 
     void reset(){
-        checkCUDA(__LINE__,cudaMemset(responses_c_[0]->dataGPU, 0, responses_c_[0]->numBytes()));        
-        checkCUDA(__LINE__,cudaMemset(responses_h_[0]->dataGPU, 0, responses_h_[0]->numBytes()));
+        checkCUDA(__LINE__,cudaMemset(responses_c_[seq_length_T]->dataGPU, 0, responses_c_[seq_length_T]->numBytes()));        
+        checkCUDA(__LINE__,cudaMemset(responses_h_[seq_length_T]->dataGPU, 0, responses_h_[seq_length_T]->numBytes()));
     };
 
     void forward(Phase phase_){
 
         // copy c[T] to c[0]
-        checkCUDA(__LINE__,cudaMemcpy(responses_c_[responses_c_.size()-1]->dataGPU, responses_c_[0]->dataGPU, responses_c_[0]->numBytes(), cudaMemcpyDeviceToDevice));
+        checkCUDA(__LINE__,cudaMemcpy(responses_c_[0]->dataGPU, responses_c_[seq_length_T]->dataGPU, responses_c_[0]->numBytes(), cudaMemcpyDeviceToDevice));
 
         // copy h[T] to h[0]
-        checkCUDA(__LINE__,cudaMemcpy(responses_h_[responses_h_.size()-1]->dataGPU, responses_h_[0]->dataGPU, responses_h_[0]->numBytes(), cudaMemcpyDeviceToDevice));
+        checkCUDA(__LINE__,cudaMemcpy(responses_h_[0]->dataGPU, responses_h_[seq_length_T]->dataGPU, responses_h_[0]->numBytes(), cudaMemcpyDeviceToDevice));
 
         ComputeT avg;
 
@@ -5794,6 +5817,7 @@ public:
             std::cout<< in0->name << ".data_amean: " << avg ;
             in0->checkNaN();
             std::cout<< std::endl;
+            in0->print();
         }
         pLayer_x_transform->forward(phase_);
         if (debug_mode){
@@ -5809,6 +5833,7 @@ public:
             std::cout<< pResponse_W_xc_x->name << ".data_amean: " << avg ;
             pResponse_W_xc_x->checkNaN();
             std::cout<< std::endl;
+            pResponse_W_xc_x->print();
         }
 
         if (in.size()>2){
@@ -5817,8 +5842,7 @@ public:
 
         for (int t=0;t<seq_length_T;++t){
             
-            if (debug_mode)
-                std::cout<<"====================================================================================================================================="<<std::endl;
+            if (debug_mode) std::cout<<"====================================================================================================================================="<<std::endl;
 
             // Add layers to flush the hidden state when beginning a new
             // sequence, as indicated by cont_t.
@@ -5832,6 +5856,7 @@ public:
                 std::cout<< responses_h_[t]->name << ".data_amean: " << avg ;
                 responses_h_[t]->checkNaN();
                 std::cout<< std::endl;
+                responses_h_[t]->print();
             }
 
             if (debug_mode){
@@ -5839,6 +5864,7 @@ public:
                 std::cout<< responses_cont_[t]->name << ".data_amean: " << avg ;
                 responses_cont_[t]->checkNaN();
                 std::cout<< std::endl;
+                responses_cont_[t]->print();
             }
 
             pLayer_h_conted->in [0]=responses_h_[t];
@@ -5855,6 +5881,7 @@ public:
                 std::cout<< responses_h_conted_[t]->name << ".data_amean: " << avg ;
                 responses_h_conted_[t]->checkNaN();
                 std::cout<< std::endl;
+                responses_h_conted_[t]->print();
             }
 
             // Add layer to compute
@@ -5876,6 +5903,7 @@ public:
                 std::cout<< responses_W_hc_h_[t]->name << ".data_amean: " << avg ;
                 responses_W_hc_h_[t]->checkNaN();
                 std::cout<< std::endl;
+                responses_W_hc_h_[t]->print();
             }
 
             if (debug_mode){
@@ -5883,6 +5911,7 @@ public:
                 std::cout<< responses_W_xc_x_[t]->name << ".data_amean: " << avg ;
                 responses_W_xc_x_[t]->checkNaN();
                 std::cout<< std::endl;
+                responses_W_xc_x_[t]->print();
             }            
 
             // Add the outputs of the linear transformations to compute the gate input.
@@ -5902,6 +5931,7 @@ public:
                 std::cout<< responses_gate_input_[t]->name << ".data_amean: " << avg ;
                 responses_gate_input_[t]->checkNaN();
                 std::cout<< std::endl;
+                responses_gate_input_[t]->print();
             }
 
             if (debug_mode){
@@ -5909,6 +5939,7 @@ public:
                 std::cout<< responses_c_[t]->name << ".data_amean: " << avg ;
                 responses_c_[t]->checkNaN();
                 std::cout<< std::endl;
+                responses_c_[t]->print();
             }
 
             // Add LSTMUnit layer to compute the cell & hidden vectors c_t and h_t.
@@ -5941,6 +5972,7 @@ public:
                 std::cout<< responses_c_[t+1]->name << ".data_amean: " << avg ;
                 responses_c_[t+1]->checkNaN();
                 std::cout<< std::endl;
+                responses_c_[t+1]->print();
             }
 
             if (debug_mode){
@@ -5948,6 +5980,7 @@ public:
                 std::cout<< responses_h_[t+1]->name << ".data_amean: " << avg ;
                 responses_h_[t+1]->checkNaN();
                 std::cout<< std::endl;
+                responses_h_[t+1]->print();
             }            
 
         }
@@ -5971,7 +6004,28 @@ public:
         pLayer_gate_input->clearDiff();
         pLayer_lstm_unit->clearDiff();
 
+        ComputeT avg;
+
         for (int t=seq_length_T-1;t>=0;--t){
+
+            if (debug_mode) std::cout<<"====================================================================================================================================="<<std::endl;
+
+
+            if (debug_mode){
+                avg = responses_c_[t+1]->ameanDiff();
+                std::cout<< responses_c_[t+1]->name << ".diff_amean: " << avg ;
+                responses_c_[t+1]->checkNaN();
+                std::cout<< std::endl;
+                responses_c_[t+1]->print(false);
+            }
+            if (debug_mode){
+                avg = responses_h_[t+1]->ameanDiff();
+                std::cout<< responses_h_[t+1]->name << ".diff_amean: " << avg ;
+                responses_h_[t+1]->checkNaN();
+                std::cout<< std::endl;
+                responses_h_[t+1]->print(false);
+            }
+
             pLayer_lstm_unit->in[0]=responses_c_[t];
             pLayer_lstm_unit->in[1]=responses_gate_input_[t];
             pLayer_lstm_unit->in[2]=responses_cont_[t];
@@ -5980,24 +6034,129 @@ public:
             pLayer_lstm_unit->X_acts = X_acts_[t];
             pLayer_lstm_unit->backward(phase_);
 
+            if (debug_mode){
+                std::cout<< "Layer: LSTMUnit"<< std::endl;
+            }
+
+            if (debug_mode){
+                avg = responses_c_[t]->ameanDiff();
+                std::cout<< responses_c_[t]->name << ".diff_amean: " << avg ;
+                responses_c_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_c_[t]->print(false);
+            }
+            if (debug_mode){
+                avg = responses_gate_input_[t]->ameanDiff();
+                std::cout<< responses_gate_input_[t]->name << ".diff_amean: " << avg ;
+                responses_gate_input_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_gate_input_[t]->print(false);
+            }
+
             pLayer_gate_input->in[0]=responses_W_hc_h_[t];
             pLayer_gate_input->in[1]=responses_W_xc_x_[t];
             pLayer_gate_input->out[0]=responses_gate_input_[t];
             pLayer_gate_input->backward(phase_);
 
+            if (debug_mode){
+                std::cout<< "Layer: gate_input_t := W_hc * h_conted_{t-1} + W_xc * x_t + b_c"<< std::endl;
+            }
+
+            if (debug_mode){
+                avg = responses_W_xc_x_[t]->ameanDiff();
+                std::cout<< responses_W_xc_x_[t]->name << ".diff_amean: " << avg ;
+                responses_W_xc_x_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_W_xc_x_[t]->print(false);
+            }
+
+            if (debug_mode){
+                avg = responses_W_hc_h_[t]->ameanDiff();
+                std::cout<< responses_W_hc_h_[t]->name << ".diff_amean: " << avg ;
+                responses_W_hc_h_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_W_hc_h_[t]->print(false);
+            }
+
             pLayer_transform->in[0]=responses_h_conted_[t];
             pLayer_transform->out[0]=responses_W_hc_h_[t];
             pLayer_transform->backward(phase_);            
+
+            if (debug_mode){
+                std::cout<< "Layer: W_hc_h_{t-1} := W_hc * h_conted_{t-1}";
+                std::cout<<"  bias_numel="<<pLayer_transform->bias_numel<< "  ";
+                avg = pLayer_transform->ameanWeightData(); if (avg!=-1) std::cout<<" weight.data: "<< avg;
+                pLayer_transform->checkNaNWeight();                
+
+                avg = pLayer_transform->ameanWeightDiff(); if (avg!=-1) std::cout<<" weight.diff: "<< avg;
+                std::cout<< std::endl;
+            }
+
+            if (debug_mode){
+                avg = responses_h_conted_[t]->ameanDiff();
+                std::cout<< responses_h_conted_[t]->name << ".diff_amean: " << avg ;
+                responses_h_conted_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_h_conted_[t]->print(false);
+            }
+
+            if (debug_mode){
+                avg = responses_cont_[t]->ameanData();
+                std::cout<< responses_cont_[t]->name << ".data_amean: " << avg ;
+                responses_cont_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_cont_[t]->print(false);
+            }
 
             pLayer_h_conted->in [0]=responses_h_[t];
             pLayer_h_conted->in [1]=responses_cont_[t];
             pLayer_h_conted->out[0]=responses_h_conted_[t];
             pLayer_h_conted->backward(phase_);
+
+            if (debug_mode){
+                std::cout<< "Layer: h_conted_{t-1} := cont_t * h_{t-1}"<< std::endl;
+            }
+
+            if (debug_mode){
+                avg = responses_h_[t]->ameanDiff();
+                std::cout<< responses_h_[t]->name << ".diff_amean: " << avg ;
+                responses_h_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_h_[t]->print(false);
+            }
+
         }
         if (in.size()>2){
             pLayer_x_static_transform->backward(phase_);
         }
+
+        if (debug_mode){
+            avg = pResponse_W_xc_x->ameanDiff();
+            std::cout<< pResponse_W_xc_x->name << ".data_adiff: " << avg ;
+            pResponse_W_xc_x->checkNaN();
+            std::cout<< std::endl;
+            pResponse_W_xc_x->print(false);
+        }
+
         pLayer_x_transform->backward(phase_);
+
+        if (debug_mode){
+            std::cout<< "Layer: W_xc_x = W_xc * x + b_c      ";
+            avg = in0->ameanDiff();
+            std::cout<< in0->name << ".data_adiff: " << avg ;
+            in0->checkNaN();
+            std::cout<< std::endl;
+            in0->print(false);
+        }
+
+        if (debug_mode){
+            avg = pLayer_x_transform->ameanWeightDiff(); if (avg!=-1) std::cout<<" weight.diff: "<< avg;
+            pLayer_x_transform->checkNaNWeight();
+            avg = pLayer_x_transform->ameanBiasDiff();   if (avg!=-1) std::cout<<" bias.diff: "<< avg;            
+            pLayer_x_transform->checkNaNBias();
+            std::cout<< std::endl;
+        }
+
     };
 
     ~LSTMLayer(){
@@ -6690,6 +6849,7 @@ public:
             result[i] /= iter;
         }
 
+        std::cout << std::endl;
         std::cout << "Average over " << iter << " iterations  ";
         for (int i=0;i<result.size();++i){
             if (loss_layers[i]->phase == phase || loss_layers[i]->phase == TrainingTesting){
