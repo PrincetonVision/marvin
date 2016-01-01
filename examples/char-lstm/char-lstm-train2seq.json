@@ -1,0 +1,120 @@
+{
+	"train":
+		{
+			"path": "examples/char-lstm/char-lstm2",
+			"solver": "RMSprop",
+			"rms_decay": 0.95,
+			"regularizer": "L2",
+			"momentum": 0.9,
+			"weight_decay": 0.0005,
+			"base_lr": 0.002,
+			"lr_policy": "LR_multistep",
+			"lr_gamma": 0.97,
+			"stepvalue": [4230, 4653, 5076, 5499, 5922, 6345, 6768, 7191, 7614, 8037, 8460, 8883, 9306, 9729, 10152, 10575, 10998, 11421, 11844, 12267, 12690, 13113, 13536, 13959, 14382, 14805, 15228, 15651, 16074, 16497, 16920, 17343, 17766, 18189, 18612, 19035, 19458, 19881, 20304, 20727, 21150],
+			"max_iter": 211500,
+			"train_iter": 1,
+			"snapshot_iter": 10000,
+			"display_iter": 10,
+			"test_iter": 0,
+			"test_interval": 5000,
+			"debug_mode": false,
+			"GPU_solver": 0,
+			"GPU": [0]
+		},
+	"test":
+		{
+			"debug_mode": false,
+			"GPU": 0
+		},
+	"layers":[
+		{
+			"type": "SequenceTraining",
+			"name": "dataTrain",
+			"phase": "Training",
+			"file": "examples/char-lstm/tinyshakespeare_train_seq.tensor",
+			"seq_length": 50,
+			"batch_size": 52,
+			"vocabulary": 65,
+			"out": ["data","label","clip_marker"]
+		},
+		{
+			"type": "SequenceTraining",
+			"name": "dataTest",
+			"phase": "Testing",
+			"file": "examples/char-lstm/tinyshakespeare_test_seq.tensor",
+			"seq_length": 50,
+			"batch_size": 52,
+			"vocabulary": 65,
+			"out": ["data","label","clip_marker"]
+		},
+		{
+			"in": ["data","clip_marker"],
+			"type": "LSTM",
+			"name": "lstm1",
+			"num_output": 128,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Uniform",
+			"weight_filler_param": 0.08,
+			"bias_lr_mult": 1.0,
+			"bias_filler": "Uniform",
+			"bias_filler_param": 0.08,
+			"debug_mode": false,
+			"out": ["h1"]
+		},
+		{
+			"in": ["h1"],
+			"type": "Reshape",
+			"name": "label-reshape",
+			"shape": [50,-1,128],
+			"out": ["h1-reshape"]
+		},	
+		{
+			"in": ["h1-reshape","clip_marker"],
+			"type": "LSTM",
+			"name": "lstm2",
+			"num_output": 128,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Uniform",
+			"weight_filler_param": 0.08,
+			"bias_lr_mult": 1.0,
+			"bias_filler": "Uniform",
+			"bias_filler_param": 0.08,
+			"debug_mode": false,
+			"out": ["h2"]
+		},
+		{
+			"in": ["h2"],
+			"type": "InnerProduct",
+			"name": "ip",
+			"num_output": 65,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Uniform",
+			"weight_filler_param": 0.08,
+			"bias_lr_mult": 1.0,
+			"bias_filler": "Uniform",
+			"bias_filler_param": 0.08,
+			"out": ["prob"]
+		},
+		{
+			"in": ["prob"],
+			"type": "Softmax",
+			"stable_gradient": true,
+			"name": "prob",
+			"out": ["prob"]
+		},
+		{
+			"in": ["label"],
+			"type": "Reshape",
+			"name": "label-reshape",
+			"shape": [-1,1,1],
+			"out": ["label-reshape"]
+		},
+		{
+			"in": ["prob","label-reshape"],
+			"type": "Loss",
+			"name": "loss",
+			"mode": "MultinomialLogistic_StableSoftmax",
+			"loss_weight": 1.0
+		}
+	]
+}
