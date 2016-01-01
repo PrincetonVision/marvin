@@ -3224,6 +3224,134 @@ public:
     };
 };
 
+class SequenceTrainingLayer: public DataLayer {
+    Tensor<uint8_t>* dataCPU;
+
+    std::uniform_int_distribution<size_t>* distribution_uniform;
+    std::vector<size_t> locations;
+    std::vector<bool> start;
+    size_t total_length; 
+    StorageT* labelCPU;
+    size_t iter;
+public:
+    std::string file;
+    int seq_length;
+    int batch_size;
+    int vocabulary;
+
+    void init(){
+        train_me = false;
+        std::cout<<"SequenceTrainingLayer "<<name<<" loading data: "<<std::endl;
+        dataCPU = new Tensor<uint8_t> (file);
+        total_length = numel(dataCPU->dim);
+        locations.resize(batch_size);
+        start.resize(batch_size);
+        distribution_uniform = new std::uniform_int_distribution<size_t>(0,total_length-seq_length-2);
+        shuffle();
+        labelCPU = new StorageT[seq_length*batch_size];
+    };
+
+
+    SequenceTrainingLayer(std::string name_): DataLayer(name_), dataCPU(NULL), labelCPU(NULL), iter(0){
+        init();
+    };
+
+    SequenceTrainingLayer(JSON* json): dataCPU(NULL), labelCPU(NULL), iter(0){
+        SetOrDie(json, name)
+        SetValue(json, phase,       TrainingTesting)
+        SetOrDie(json, seq_length   )
+        SetOrDie(json, batch_size   )
+        SetOrDie(json, file         )
+        SetOrDie(json, vocabulary   )
+        init();
+    };
+
+    ~SequenceTrainingLayer(){
+        if (dataCPU!=NULL) delete dataCPU;
+        if (labelCPU!=NULL) delete [] labelCPU;
+    };
+
+    int numofitems(){
+        return dataCPU->dim[0];
+    };
+
+    void shuffle(int b){
+        locations[b] = (*distribution_uniform)(rng);
+        start[b] = false;
+    };
+
+    void shuffle(){
+        for (int b=0;b<batch_size;++b) shuffle(b);
+    };
+
+    void forward(Phase phase_){
+
+        checkCUDA(__LINE__,cudaMemset(out[0]->dataGPU, 0, out[0]->numBytes()));
+
+        GPU_set_ones(seq_length*batch_size, out[2]->dataGPU);
+
+        for (int b=0;b<batch_size;++b){
+            if (locations[b]+seq_length > total_length-1){
+                //shuffle(b);
+                locations[b] = 0;
+                start[b] = false;
+            }
+
+            size_t lb = locations[b];
+
+            for (int t=0;t<seq_length;++t){
+                GPU_set_ones(1, out[0]->dataGPU + ( t * batch_size + b) * vocabulary + size_t(dataCPU->CPUmem[lb]));
+                labelCPU[t * batch_size + b] = CPUCompute2StorageT(ComputeT(dataCPU->CPUmem[lb+1]));
+                ++lb;
+            }
+
+            locations[b] = lb;
+
+            if (! start[b] ){
+                GPU_set_zeros(1, out[2]->dataGPU + b);
+                start[b] = true;
+            }
+        }
+
+        checkCUDA(__LINE__, cudaMemcpy(out[1]->dataGPU, labelCPU, seq_length * batch_size * sizeofStorageT, cudaMemcpyHostToDevice) );     
+
+        iter += seq_length * batch_size;
+
+        if (iter == total_length) ++epoch;
+    };
+
+    size_t Malloc(Phase phase_){
+        std::cout<< (train_me? "* " : "  ");
+        std::cout<<name<<std::endl;
+
+        if (out.size()!=3){  std::cout<<"SequenceGenerationLayer: # of out's should be 3."<<std::endl; FatalError(__LINE__); }
+
+        size_t memoryBytes = 0;
+
+        std::vector<int> dim;
+
+        // data: TxNxV
+        dim.push_back(seq_length);
+        dim.push_back(batch_size);
+        dim.push_back(vocabulary);
+        out[0]->need_diff = false;
+        memoryBytes += out[0]->Malloc(dim);
+
+        // label: TxNx1
+        dim[2]=1;
+        out[1]->need_diff = false;
+        memoryBytes += out[1]->Malloc(dim);
+
+        // clip marker: TxNx1
+        out[2]->need_diff = false;
+        memoryBytes += out[2]->Malloc(dim);
+
+        return memoryBytes;
+    };
+
+};
+
+
 class SequenceGenerationLayer: public DataLayer {
     int channel;
     size_t iter;
@@ -6257,9 +6385,11 @@ public:
             else if (0==type.compare("ROIPooling"))             pLayer = new ROIPoolingLayer(p);
             else if (0==type.compare("Tensor"))                 pLayer = new TensorLayer(p);
             else if (0==type.compare("LSTM"))                   pLayer = new LSTMLayer(p);
+            else if (0==type.compare("SequenceTraining"))       pLayer = new SequenceTrainingLayer(p);
             else if (0==type.compare("SequenceGeneration"))    {pLayer = new SequenceGenerationLayer(p); sequence_layers.push_back((SequenceGenerationLayer*)pLayer);   }
             else if (0==type.compare("Loss"))                  {pLayer = new LossLayer(p); loss_layers.push_back((LossLayer*)pLayer);   }
             else { std::cout<<"ERROR: recognizable layer in JSON file: "<<type<<std::endl; FatalError(__LINE__);};
+
 
             pLayer->cudnnHandle = cudnnHandle;
             pLayer->cublasHandle = cublasHandle;
@@ -6920,6 +7050,8 @@ public:
         SetValue(train_obj, momentum2,      0.999)
         SetValue(train_obj, delta,          0.00000001)
         SetValue(train_obj, rms_decay,      0.98)
+
+        SetValue(train_obj, stepvalue,      std::vector<int>())
 
         SetValue(train_obj, weight_decay,   0.0005)
         SetValue(train_obj, base_lr,        0.01)
