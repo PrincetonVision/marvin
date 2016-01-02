@@ -21,6 +21,7 @@
     #define GPUasum Hasum
     #define ISNAN(x) (ishnan(x))
     #define ComputeT_MIN FLT_MIN
+    #define ComputeT_MAX FLT_MAX
     #include <cuda_fp16.h>
 #elif DATATYPE==1
     #pragma message "Compiling using StorageT=float ComputeT=float"
@@ -38,6 +39,7 @@
     #define GPUasum cublasSasum
     #define ISNAN(x) (std::isnan(x))
     #define ComputeT_MIN FLT_MIN
+    #define ComputeT_MAX FLT_MAX
 #elif DATATYPE==2
     #pragma message "Compiling using StorageT=double ComputeT=double"
     #define StorageT double
@@ -54,6 +56,7 @@
     #define GPUasum cublasDasum
     #define ISNAN(x) (std::isnan(x))
     #define ComputeT_MIN DBL_MIN
+    #define ComputeT_MAX DBL_MAX
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1831,34 +1834,36 @@ void bsa2b(size_t N, const StorageT* a, StorageT* b){
     Kernel_bsa2b<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,a,b);
 }
 
-__global__ void Kernel_update_SGDL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_SGDL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
         ComputeT h  = GPUStorage2ComputeT(gradients[idx]);
-        ComputeT g;
-        if (w>0)        g = decay;
-        else if (w<0)   g = -decay;
-        else            g = 0;
+        ComputeT g = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        if (w>0)        g += decay;
+        else if (w<0)   g -= decay;
         gradients[idx] = GPUCompute2StorageT(momentum * h + lr * g);
     }
 }
 
-__global__ void Kernel_update_SGDL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_SGDL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
         ComputeT h  = GPUStorage2ComputeT(gradients[idx]);
-        ComputeT g  = decay * w;     // L2 regularization
+        ComputeT g  = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        g += decay * w;     // L2 regularization
         gradients[idx] = GPUCompute2StorageT(momentum * h + lr * g);
     }
 }
 
-__global__ void Kernel_update_AdaDeltaL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_AdaDeltaL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
@@ -1868,11 +1873,11 @@ __global__ void Kernel_update_AdaDeltaL1(size_t CUDA_NUM_LOOPS, size_t N, int nN
         size_t h2_idx = N*(nNets+2)+idx;
         ComputeT h2  = GPUStorage2ComputeT(gradients[h2_idx]);
         
-        ComputeT g;
-        if (w>0)        g = decay;
-        else if (w<0)   g = -decay;
-        else            g = 0;
+        ComputeT g = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        if (w>0)        g += decay;
+        else if (w<0)   g -= decay;
 
         h = momentum * h + (1-momentum)*g*g;
         g = g * sqrt( (delta+h2) / (delta+h) );
@@ -1883,7 +1888,7 @@ __global__ void Kernel_update_AdaDeltaL1(size_t CUDA_NUM_LOOPS, size_t N, int nN
     }
 }
 
-__global__ void Kernel_update_AdaDeltaL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_AdaDeltaL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
@@ -1893,8 +1898,10 @@ __global__ void Kernel_update_AdaDeltaL2(size_t CUDA_NUM_LOOPS, size_t N, int nN
         size_t h2_idx = N*(nNets+2)+idx;
         ComputeT h2  = GPUStorage2ComputeT(gradients[h2_idx]);
 
-        ComputeT g  = decay * w;     // L2 regularization
+        ComputeT g  = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        g += decay * w;     // L2 regularization
 
         h = momentum * h + (1-momentum)*g*g;
         g = g * sqrt( (delta+h2) / (delta+h) );
@@ -1905,7 +1912,7 @@ __global__ void Kernel_update_AdaDeltaL2(size_t CUDA_NUM_LOOPS, size_t N, int nN
     }
 }
 
-__global__ void Kernel_update_AdaGradL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_AdaGradL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
@@ -1913,18 +1920,18 @@ __global__ void Kernel_update_AdaGradL1(size_t CUDA_NUM_LOOPS, size_t N, int nNe
         ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
-        ComputeT g;
-        if (w>0)        g = decay;
-        else if (w<0)   g = -decay;
-        else            g = 0;
+        ComputeT g = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        if (w>0)        g += decay;
+        else if (w<0)   g -= decay;
         h = g * g + h;
         gradients[h_idx] = GPUCompute2StorageT(h);
         gradients[idx] = GPUCompute2StorageT(momentum * u + lr * g / (sqrt(h) + delta));
     }
 }
 
-__global__ void Kernel_update_AdaGradL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_AdaGradL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
@@ -1932,15 +1939,17 @@ __global__ void Kernel_update_AdaGradL2(size_t CUDA_NUM_LOOPS, size_t N, int nNe
         ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
-        ComputeT g  = decay * w;     // L2 regularization
+        ComputeT g  = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        g += decay * w;     // L2 regularization
         h = g * g + h;
         gradients[h_idx] = GPUCompute2StorageT(h);
         gradients[idx] = GPUCompute2StorageT(momentum * u + lr * g / (sqrt(h) + delta));
     }
 }
 
-__global__ void Kernel_update_AdamL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT momentum2, ComputeT delta, int iter, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_AdamL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT momentum2, ComputeT delta, int iter, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
@@ -1949,11 +1958,11 @@ __global__ void Kernel_update_AdamL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
         ComputeT h2  = GPUStorage2ComputeT(gradients[h2_idx]);
-        ComputeT g;
-        if (w>0)        g = decay;
-        else if (w<0)   g = -decay;
-        else            g = 0;
+        ComputeT g = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        if (w>0)        g += decay;
+        else if (w<0)   g -= decay;
         h = momentum * h + (1-momentum )*g;
         h2= momentum2* h2+ (1-momentum2)*g*g;
         gradients[h_idx] = GPUCompute2StorageT(h);
@@ -1962,7 +1971,7 @@ __global__ void Kernel_update_AdamL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
     }
 }
 
-__global__ void Kernel_update_AdamL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT momentum2, ComputeT delta, int iter, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_AdamL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT momentum2, ComputeT delta, int iter, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
@@ -1971,8 +1980,10 @@ __global__ void Kernel_update_AdamL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
         ComputeT h2  = GPUStorage2ComputeT(gradients[h2_idx]);
-        ComputeT g  = decay * w;     // L2 regularization
+        ComputeT g  = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        g += decay * w;     // L2 regularization
         h = momentum * h + (1-momentum )*g;
         h2= momentum2* h2+ (1-momentum2)*g*g;
         gradients[h_idx] = GPUCompute2StorageT(h);
@@ -1981,18 +1992,18 @@ __global__ void Kernel_update_AdamL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
     }
 }
 
-__global__ void Kernel_update_NAGL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_NAGL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
-        ComputeT g;
-        if (w>0)        g = decay;
-        else if (w<0)   g = -decay;
-        else            g = 0;
+        ComputeT g = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        if (w>0)        g += decay;
+        else if (w<0)   g -= decay;
         ComputeT t  = h;
         h = momentum * h + lr * g;
         gradients[h_idx] = GPUCompute2StorageT(h);
@@ -2000,15 +2011,17 @@ __global__ void Kernel_update_NAGL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, 
     }
 }
 
-__global__ void Kernel_update_NAGL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_NAGL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
-        ComputeT g  = decay * w;     // L2 regularization
+        ComputeT g  = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        g += decay * w;     // L2 regularization
         ComputeT t  = h;
         h = momentum * h + lr * g;
         gradients[h_idx] = GPUCompute2StorageT(h);
@@ -2016,76 +2029,78 @@ __global__ void Kernel_update_NAGL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, 
     }
 }
 
-__global__ void Kernel_update_RMSpropL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT rms_decay, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_RMSpropL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT rms_decay, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
-        ComputeT g;
-        if (w>0)        g = decay;
-        else if (w<0)   g = -decay;
-        else            g = 0;
+        ComputeT g = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        if (w>0)        g += decay;
+        else if (w<0)   g -= decay;
         h = rms_decay * h + (1-rms_decay) * g * g;
         gradients[h_idx] = GPUCompute2StorageT(h);
         gradients[idx] = GPUCompute2StorageT(lr * g / (sqrt(h) + delta));
     }
 }
 
-__global__ void Kernel_update_RMSpropL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT decay, ComputeT rms_decay, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
+__global__ void Kernel_update_RMSpropL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT rms_decay, ComputeT delta, ComputeT lr, const StorageT* weights, StorageT* gradients){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
-        ComputeT g  = decay * w;     // L2 regularization
+        ComputeT g  = 0;
         for (int k=1; k<nNets+1; ++k) g += GPUStorage2ComputeT(gradients[N*k+idx]);
+        g = max(min_g, min(max_g, g));
+        g += decay * w;     // L2 regularization
         h = rms_decay * h + (1-rms_decay) * g * g;
         gradients[h_idx] = GPUCompute2StorageT(h);
         gradients[idx] = GPUCompute2StorageT(lr * g / (sqrt(h) + delta));
     }
 }
 
-void update_solver(SolverAlgorithm solver, Regularizer regularizer, int iter, size_t N, int nNets, ComputeT decay, ComputeT momentum, ComputeT momentum2, ComputeT delta, ComputeT rms_decay, ComputeT lr, const StorageT* weights, StorageT* gradients){
+void update_solver(SolverAlgorithm solver, Regularizer regularizer, int iter, size_t N, int nNets, ComputeT min_g, ComputeT max_g, ComputeT decay, ComputeT momentum, ComputeT momentum2, ComputeT delta, ComputeT rms_decay, ComputeT lr, const StorageT* weights, StorageT* gradients){
     switch (solver){
         case SGD:
             if (regularizer==L1)
-                Kernel_update_SGDL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,lr,weights,gradients);
+                Kernel_update_SGDL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,lr,weights,gradients);
             else
-                Kernel_update_SGDL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,lr,weights,gradients);
+                Kernel_update_SGDL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,lr,weights,gradients);
             break;
         case AdaDelta:
             if (regularizer==L1)
-                Kernel_update_AdaDeltaL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,delta,lr,weights,gradients);
+                Kernel_update_AdaDeltaL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,delta,lr,weights,gradients);
             else
-                Kernel_update_AdaDeltaL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,delta,lr,weights,gradients);
+                Kernel_update_AdaDeltaL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,delta,lr,weights,gradients);
             break;
         case AdaGrad:
             if (regularizer==L1)
-                Kernel_update_AdaGradL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,delta,lr,weights,gradients);
+                Kernel_update_AdaGradL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,delta,lr,weights,gradients);
             else
-                Kernel_update_AdaGradL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,delta,lr,weights,gradients);
+                Kernel_update_AdaGradL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,delta,lr,weights,gradients);
             break;
         case Adam:
             if (regularizer==L1)
-                Kernel_update_AdamL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,momentum2,delta,iter+1,lr,weights,gradients);
+                Kernel_update_AdamL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,momentum2,delta,iter+1,lr,weights,gradients);
             else
-                Kernel_update_AdamL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,momentum2,delta,iter+1,lr,weights,gradients);
+                Kernel_update_AdamL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,momentum2,delta,iter+1,lr,weights,gradients);
             break;
         case NAG:
             if (regularizer==L1)
-                Kernel_update_NAGL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,delta,lr,weights,gradients);
+                Kernel_update_NAGL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,delta,lr,weights,gradients);
             else
-                Kernel_update_NAGL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,momentum,delta,lr,weights,gradients);
+                Kernel_update_NAGL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,momentum,delta,lr,weights,gradients);
             break;
         case RMSprop:
             if (regularizer==L1)
-                Kernel_update_RMSpropL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,rms_decay,delta,lr,weights,gradients);
+                Kernel_update_RMSpropL1<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,rms_decay,delta,lr,weights,gradients);
             else
-                Kernel_update_RMSpropL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,decay,rms_decay,delta,lr,weights,gradients);
+                Kernel_update_RMSpropL2<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N),N,nNets,min_g,max_g,decay,rms_decay,delta,lr,weights,gradients);
             break;
     }
     checkCUDA(__LINE__,cudaGetLastError());
@@ -2529,7 +2544,8 @@ public:
                         for (int k=0;k<display_dim[2];++k){
                             std::cout<<CPUmem[i*dim[dim.size()-2]*dim[dim.size()-1]+j*dim[dim.size()-1]+k]<<" ";
                         }
-                        std::cout<<std::endl;
+                        if (display_dim[2]>1)
+                            std::cout<<std::endl;
                     }
                     std::cout<<std::endl;
                 }
@@ -2706,7 +2722,7 @@ public:
     };
 
     void clearDiff(){
-        if (diffGPU!=NULL && !isProxy){
+        if (diffGPU!=NULL){
             checkCUDA(__LINE__, cudaMemset(diffGPU, 0, sizeofStorageT * numel(dim)));
         }
     };
@@ -2724,7 +2740,8 @@ public:
         Tensor<StorageT>* feature = new Tensor<StorageT>(dim);
         feature->readGPU((printData? dataGPU: diffGPU));
         std::vector<int> display_dim;
-        display_dim.push_back(min(size_t(100),numel(dim)));
+        //display_dim.push_back(min(size_t(100),numel(dim)));
+        display_dim = dim;
         feature->print(display_dim);
         delete feature;
     };
@@ -3246,7 +3263,7 @@ public:
         total_length = numel(dataCPU->dim);
         locations.resize(batch_size);
         start.resize(batch_size);
-        distribution_uniform = new std::uniform_int_distribution<size_t>(0,total_length-seq_length-2);
+        distribution_uniform = new std::uniform_int_distribution<size_t>(0,total_length-seq_length-3);
         shuffle();
         labelCPU = new StorageT[seq_length*batch_size];
     };
@@ -3276,8 +3293,8 @@ public:
     };
 
     void shuffle(int b){
-        locations[b] = (*distribution_uniform)(rng);
-        start[b] = false;
+        start[b] = (*distribution_uniform)(rng);
+        locations[b] = start[b] + 1;
     };
 
     void shuffle(){
@@ -3292,25 +3309,20 @@ public:
 
         for (int b=0;b<batch_size;++b){
             if (locations[b]+seq_length > total_length-1){
-                //shuffle(b);
                 locations[b] = 0;
-                start[b] = false;
+                GPU_set_zeros(1, out[2]->dataGPU + b);
+            }else if (locations[b]<=start[b] && locations[b]+seq_length> start[b]){
+                shuffle(b);
+                GPU_set_zeros(1, out[2]->dataGPU + b);
             }
 
             size_t lb = locations[b];
-
             for (int t=0;t<seq_length;++t){
                 GPU_set_ones(1, out[0]->dataGPU + ( t * batch_size + b) * vocabulary + size_t(dataCPU->CPUmem[lb]));
                 labelCPU[t * batch_size + b] = CPUCompute2StorageT(ComputeT(dataCPU->CPUmem[lb+1]));
                 ++lb;
             }
-
             locations[b] = lb;
-
-            if (! start[b] ){
-                GPU_set_zeros(1, out[2]->dataGPU + b);
-                start[b] = true;
-            }
         }
 
         checkCUDA(__LINE__, cudaMemcpy(out[1]->dataGPU, labelCPU, seq_length * batch_size * sizeofStorageT, cudaMemcpyHostToDevice) );     
@@ -5940,6 +5952,9 @@ public:
 
         ComputeT avg;
 
+
+        if (debug_mode) std::cout<<"====================================================================================================================================="<<std::endl;
+
         if (debug_mode){
             avg = in0->ameanData();
             std::cout<< in0->name << ".data_amean: " << avg ;
@@ -6112,18 +6127,22 @@ public:
             }            
 
         }
+
     };
 
     void backward(Phase phase_){
+
         if (in.size()>2) pResponse_W_xc_x_static->clearDiff();
         pResponse_W_xc_x->clearDiff();
         for (int r=0;r<responses_W_xc_x_.size();++r) responses_W_xc_x_[r]->clearDiff();
         for (int r=0;r<responses_cont_.size();++r) responses_cont_[r]->clearDiff();
         for (int r=0;r<responses_c_.size();++r) responses_c_[r]->clearDiff();
-        for (int r=0;r<responses_h_.size();++r) responses_h_[r]->clearDiff();
+        responses_h_[0]->clearDiff();
+        //for (int r=0;r<responses_h_.size();++r) responses_h_[r]->clearDiff();
         for (int r=0;r<responses_h_conted_.size();++r) responses_h_conted_[r]->clearDiff();
         for (int r=0;r<responses_W_hc_h_.size();++r) responses_W_hc_h_[r]->clearDiff();
         for (int r=0;r<responses_gate_input_.size();++r) responses_gate_input_[r]->clearDiff();
+
 
         if (in.size()>2) pLayer_x_static_transform->clearDiff();
         pLayer_x_transform->clearDiff();
@@ -6206,6 +6225,14 @@ public:
                 responses_W_hc_h_[t]->print(false);
             }
 
+            if (debug_mode){
+                avg = pLayer_transform->ameanWeightData(); if (avg!=-1) std::cout<<" weight.data: "<< avg;
+                pLayer_transform->checkNaNWeight();                
+
+                avg = pLayer_transform->ameanWeightDiff(); if (avg!=-1) std::cout<<" weight.diff: "<< avg;
+                std::cout<< std::endl;
+            }            
+
             pLayer_transform->in[0]=responses_h_conted_[t];
             pLayer_transform->out[0]=responses_W_hc_h_[t];
             pLayer_transform->backward(phase_);            
@@ -6221,6 +6248,14 @@ public:
             }
 
             if (debug_mode){
+                avg = responses_cont_[t]->ameanData();
+                std::cout<< responses_cont_[t]->name << ".data_amean: " << avg ;
+                responses_cont_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_cont_[t]->print(false);
+            }
+
+            if (debug_mode){
                 avg = responses_h_conted_[t]->ameanDiff();
                 std::cout<< responses_h_conted_[t]->name << ".diff_amean: " << avg ;
                 responses_h_conted_[t]->checkNaN();
@@ -6229,12 +6264,25 @@ public:
             }
 
             if (debug_mode){
-                avg = responses_cont_[t]->ameanData();
-                std::cout<< responses_cont_[t]->name << ".data_amean: " << avg ;
-                responses_cont_[t]->checkNaN();
+                avg = responses_h_[t]->ameanDiff();
+                std::cout<< responses_h_[t]->name << ".diff_amean: " << avg ;
+                responses_h_[t]->checkNaN();
                 std::cout<< std::endl;
-                responses_cont_[t]->print(false);
+                responses_h_[t]->print(false);
             }
+
+            //debug hack. need to be fixed
+            //std::cout<<" DEBUG HACK ########################################## Iteration " << t <<std::endl;
+            /*
+            responses_h_[t]->clearDiff();
+            if (debug_mode){
+                avg = responses_h_[t]->ameanDiff();
+                std::cout<< responses_h_[t]->name << ".diff_amean: " << avg ;
+                responses_h_[t]->checkNaN();
+                std::cout<< std::endl;
+                responses_h_[t]->print(false);
+            }
+            */
 
             pLayer_h_conted->in [0]=responses_h_[t];
             pLayer_h_conted->in [1]=responses_cont_[t];
@@ -6254,6 +6302,10 @@ public:
             }
 
         }
+
+        if (debug_mode) std::cout<<"====================================================================================================================================="<<std::endl;
+
+
         if (in.size()>2){
             pLayer_x_static_transform->backward(phase_);
         }
@@ -6265,6 +6317,15 @@ public:
             std::cout<< std::endl;
             pResponse_W_xc_x->print(false);
         }
+
+        if (debug_mode){
+            avg = pLayer_x_transform->ameanWeightDiff(); if (avg!=-1) std::cout<<" weight.diff: "<< avg;
+            pLayer_x_transform->checkNaNWeight();
+            avg = pLayer_x_transform->ameanBiasDiff();   if (avg!=-1) std::cout<<" bias.diff: "<< avg;            
+            pLayer_x_transform->checkNaNBias();
+            std::cout<< std::endl;
+        }
+
 
         pLayer_x_transform->backward(phase_);
 
@@ -7034,6 +7095,8 @@ public:
     int test_iter;          // how many forward passes the test should carry out
     int test_interval;      // Carry out testing every 500 training iterations
     bool debug_mode;
+    ComputeT min_g;
+    ComputeT max_g;
 
 
     Solver(std::string filename=std::string()){
@@ -7050,6 +7113,8 @@ public:
         SetValue(train_obj, momentum2,      0.999)
         SetValue(train_obj, delta,          0.00000001)
         SetValue(train_obj, rms_decay,      0.98)
+        SetValue(train_obj, min_g,          -ComputeT_MAX)
+        SetValue(train_obj, max_g,          ComputeT_MAX)
 
         SetValue(train_obj, stepvalue,      std::vector<int>())
 
@@ -7311,16 +7376,16 @@ public:
         for (int l=0; l<nets[0]->layers.size(); ++l){
             if (nets[0]->layers[l]->train_me){
                 if (nets[0]->layers[l]->weight_numel>0)
-                    update_solver(solver, regularizer, iter, nets[0]->layers[l]->weight_numel, nets.size(), weight_decay * nets[0]->layers[l]->weight_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->weight_lr_mult, nets[0]->layers[l]->weight_dataGPU, nets[0]->layers[l]->weight_histGPU);
+                    update_solver(solver, regularizer, iter, nets[0]->layers[l]->weight_numel, nets.size(), min_g, max_g, weight_decay * nets[0]->layers[l]->weight_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->weight_lr_mult, nets[0]->layers[l]->weight_dataGPU, nets[0]->layers[l]->weight_histGPU);
                 if (nets[0]->layers[l]->bias_numel>0)
-                    update_solver(solver, regularizer, iter, nets[0]->layers[l]->bias_numel, nets.size(), weight_decay * nets[0]->layers[l]->bias_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->bias_lr_mult, nets[0]->layers[l]->bias_dataGPU, nets[0]->layers[l]->bias_histGPU);
+                    update_solver(solver, regularizer, iter, nets[0]->layers[l]->bias_numel, nets.size(), min_g, max_g, weight_decay * nets[0]->layers[l]->bias_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->bias_lr_mult, nets[0]->layers[l]->bias_dataGPU, nets[0]->layers[l]->bias_histGPU);
 
                 for(int ll=0; ll<nets[0]->layers[l]->sub_layers.size(); ++ll){
                     if (nets[0]->layers[l]->sub_layers[ll]->train_me){
                         if (nets[0]->layers[l]->sub_layers[ll]->weight_numel>0)
-                            update_solver(solver, regularizer, iter, nets[0]->layers[l]->sub_layers[ll]->weight_numel, nets.size(), weight_decay * nets[0]->layers[l]->sub_layers[ll]->weight_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->sub_layers[ll]->weight_lr_mult, nets[0]->layers[l]->sub_layers[ll]->weight_dataGPU, nets[0]->layers[l]->sub_layers[ll]->weight_histGPU);
+                            update_solver(solver, regularizer, iter, nets[0]->layers[l]->sub_layers[ll]->weight_numel, nets.size(), min_g, max_g, weight_decay * nets[0]->layers[l]->sub_layers[ll]->weight_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->sub_layers[ll]->weight_lr_mult, nets[0]->layers[l]->sub_layers[ll]->weight_dataGPU, nets[0]->layers[l]->sub_layers[ll]->weight_histGPU);
                         if (nets[0]->layers[l]->sub_layers[ll]->bias_numel>0)
-                            update_solver(solver, regularizer, iter, nets[0]->layers[l]->sub_layers[ll]->bias_numel, nets.size(), weight_decay * nets[0]->layers[l]->sub_layers[ll]->bias_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->sub_layers[ll]->bias_lr_mult, nets[0]->layers[l]->sub_layers[ll]->bias_dataGPU, nets[0]->layers[l]->sub_layers[ll]->bias_histGPU);
+                            update_solver(solver, regularizer, iter, nets[0]->layers[l]->sub_layers[ll]->bias_numel, nets.size(), min_g, max_g, weight_decay * nets[0]->layers[l]->sub_layers[ll]->bias_decay_mult, momentum, momentum2, delta, rms_decay, learning_rate * nets[0]->layers[l]->sub_layers[ll]->bias_lr_mult, nets[0]->layers[l]->sub_layers[ll]->bias_dataGPU, nets[0]->layers[l]->sub_layers[ll]->bias_histGPU);
                     }
                 }
 
