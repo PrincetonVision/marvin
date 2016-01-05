@@ -1,0 +1,97 @@
+{
+	"train":
+		{
+			"path": "examples/char-lstm/char-lstm2",
+			"solver": "SGD",
+			"regularizer": "L2",
+			"momentum": 0.9,
+			"weight_decay": 0.0005,
+			"base_lr": 0.01,
+			"lr_policy": "LR_inv",
+			"lr_gamma": 0.0001,
+			"lr_power": 0.75,
+			"max_iter": 10000000,
+			"train_iter": 1,
+			"snapshot_iter": 5000,
+			"display_iter": 1000,
+			"test_iter": 200,
+			"test_interval": 5000,
+			"debug_mode": false,
+			"GPU_solver": 0,
+			"GPU": [0]
+		},
+	"test":
+		{
+			"debug_mode": false,
+			"display_iter": 0,
+			"GPU": 0
+		},
+	"layers":[
+		{
+			"type": "SequenceGeneration",
+			"name": "dataTest",
+			"map2char": "examples/char-lstm/tinyshakespeare_map2char.tensor",
+			"seed": 18,
+			"length": 10000,
+			"phase": "Testing",
+			"random": true,
+			"temperature": 1,
+			"result": "ipo",
+			"out": ["data","clip_marker"]
+		},
+		{
+			"in": ["data","clip_marker"],
+			"type": "LSTM",
+			"name": "lstm1",
+			"num_output": 128,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Uniform",
+			"weight_filler_param": 0.08,
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"debug_mode": false,
+			"out": ["h1"]
+		},
+		{
+			"in": ["h1"],
+			"type": "Reshape",
+			"name": "label-reshape",
+			"shape": [1,-1,128],
+			"out": ["h1-reshape"]
+		},	
+		{
+			"in": ["h1-reshape","clip_marker"],
+			"type": "LSTM",
+			"name": "lstm2",
+			"num_output": 128,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Uniform",
+			"weight_filler_param": 0.08,
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"debug_mode": false,
+			"out": ["h2"]
+		},
+		{
+			"in": ["h2"],
+			"type": "InnerProduct",
+			"name": "ip",
+			"num_output": 65,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 2.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["ipo"]
+		},
+		{
+			"in": ["ipo"],
+			"type": "Softmax",
+			"stable_gradient": true,
+			"name": "prob",
+			"out": ["prob"]
+		}
+	]
+}

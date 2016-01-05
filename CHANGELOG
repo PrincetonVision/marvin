@@ -1,5 +1,10 @@
 v0.1.1
+- Update cuDNN from v3 to v4rc
 - Add fflush to write files in case some layer future layer crashes the program
+- Add pretrained models including AlexNet and GoogleNet
+- Add CMake support
+- Preserve address for Tensor's CPUmem when permuting data
+- BUGFIX: Fix activation bug so feature coordinate multiplies with receptive_gap
 - BUGFIX: Set receptive field's offset for each layer
 
 v0.1.0

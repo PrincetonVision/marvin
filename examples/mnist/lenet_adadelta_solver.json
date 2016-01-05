@@ -1,22 +1,25 @@
 {
 	"train":
 		{
-			"path": "examples/mnist/siamese",
-			"solver": "SGD",
+			"path": "examples/mnist/lenet",
+			"solver": "AdaDelta",
 			"regularizer": "L2",
-			"momentum": 0.9,
-			"weight_decay": 0.0000,
-			"base_lr": 0.01,
+			"momentum": 0.95,
+			"delta": 0.000001,
+			"weight_decay": 0.0005,
+			"base_lr": 1.0,
 			"lr_policy": "LR_inv",
 			"lr_gamma": 0.0001,
 			"lr_power": 0.75,
-			"snapshot_prefix": "examples/mnist/siamese_snapshot",
-			"max_iter": 50000,
+			"max_iter": 10000,
+			"train_iter": 1,
 			"snapshot_iter": 5000,
-			"display_iter": 20,
-			"test_iter": 100,
+			"display_iter": 10,
+			"test_iter": 10,
 			"test_interval": 500,
-			"GPU": [0]			
+			"debug_mode": false,
+			"GPU_solver": 0,
+			"GPU": [0]
 		},
 	"test":
 		{
@@ -26,38 +29,22 @@
 	"layers":[
 		{
 			"type": "MemoryData",
-			"name": "dataTrain_p",
-			"phase": "Training",
-			"file_data": ["examples/mnist/train-images.tensor","examples/mnist/train-labels.tensor"],
-			"batch_size": 64,
-			"out": ["data_p","label_p"]
-		},
-		{
-			"type": "MemoryData",
-			"name": "dataTrain_q",
+			"name": "dataTrain",
 			"phase": "Training",
 			"file_data": ["examples/mnist/train-images.tensor", "examples/mnist/train-labels.tensor"],
 			"batch_size": 64,
-			"out": ["data_q","label_q"]
+			"out": ["data","label"]
 		},
 		{
 			"type": "MemoryData",
-			"name": "dataTest_p",
-			"phase": "Testing",
-			"file_data": ["examples/mnist/test-images.tensor", "examples/mnist/test-labels.tensor"],
-			"batch_size": 64,
-			"out": ["data_p","label_p"]
-		},
-		{
-			"type": "MemoryData",
-			"name": "dataTest_q",
+			"name": "dataTest",
 			"phase": "Testing",
 			"file_data": ["examples/mnist/test-images.tensor","examples/mnist/test-labels.tensor"],
 			"batch_size": 64,
-			"out": ["data_q","label_q"]
+			"out": ["data","label"]
 		},
 		{
-			"in": ["data_p","data_q"],
+			"in": ["data"],
 			"type": "Convolution",
 			"name": "conv1",
 			"num_output": 20,
@@ -70,20 +57,20 @@
 			"bias_lr_mult": 2.0,
 			"bias_filler": "Constant",
 			"bias_filler_param": 0.0,
-			"out": ["conv1_p","conv1_q"]
+			"out": ["conv1"]
 		},
 		{
-			"in": ["conv1_p","conv1_q"],
+			"in": ["conv1"],
 			"type": "Pooling",
 			"name": "pool1",
 			"mode": "max",
 			"window": [2,2],
 			"padding": [0,0],
 			"stride": [2,2],
-			"out": ["pool1_p","pool1_q"]
+			"out": ["pool1"]
 		},
 		{
-			"in": ["pool1_p","pool1_q"],
+			"in": ["pool1"],
 			"type": "Convolution",
 			"name": "conv2",
 			"num_output": 50,
@@ -96,20 +83,20 @@
 			"bias_lr_mult": 2.0,
 			"bias_filler": "Constant",
 			"bias_filler_param": 0.0,
-			"out": ["conv2_p","conv2_q"]
+			"out": ["conv2"]
 		},
 		{
-			"in": ["conv2_p","conv2_q"],
+			"in": ["conv2"],
 			"type": "Pooling",
 			"name": "pool2",
 			"mode": "max",
 			"window": [2,2],
 			"padding": [0,0],
 			"stride": [2,2],
-			"out": ["pool2_p","pool2_q"]
+			"out": ["pool2"]
 		},
 		{
-			"in": ["pool2_p","pool2_q"],
+			"in": ["pool2"],
 			"type": "InnerProduct",
 			"name": "ip1",
 			"num_output": 500,
@@ -118,17 +105,17 @@
 			"bias_lr_mult": 2.0,
 			"bias_filler": "Constant",
 			"bias_filler_param": 0.0,
-			"out": ["ip1_p","ip1_q"]
+			"out": ["ip1"]
 		},
 		{
-			"in": ["ip1_p","ip1_q"],
+			"in": ["ip1"],
 			"type": "Activation",
 			"name": "relu1",
 			"mode": "ReLU",
-			"out": ["ip1_p","ip1_q"]
+			"out": ["ip1"]
 		},
 		{
-			"in": ["ip1_p","ip1_q"],
+			"in": ["ip1"],
 			"type": "InnerProduct",
 			"name": "ip2",
 			"num_output": 10,
@@ -137,33 +124,20 @@
 			"bias_lr_mult": 2.0,
 			"bias_filler": "Constant",
 			"bias_filler_param": 0.0,
-			"out": ["ip2_p","ip2_q"]
+			"out": ["prob"]
 		},
 		{
-			"in": ["ip2_p","ip2_q"],
-			"type": "InnerProduct",
-			"name": "feat",
-			"num_output": 2,
-			"weight_lr_mult": 1.0,
-			"weight_filler": "Xavier",
-			"bias_lr_mult": 2.0,
-			"bias_filler": "Constant",
-			"bias_filler_param": 0.0,
-			"out": ["feat_p","feat_q"]
+			"in": ["prob"],
+			"type": "Softmax",
+			"stable_gradient": true,
+			"name": "prob",
+			"out": ["prob"]
 		},
 		{
-			"type": "ElementWise",
-			"name": "ElementWise",
-			"mode": "ElementWise_EQL",
-			"in": ["label_p","label_q"],
-			"out": ["label"]
-		},		
-		{
-			"in": ["feat_p","feat_q","label"],
+			"in": ["prob","label"],
 			"type": "Loss",
 			"name": "loss",
-			"mode": "Contrastive",
-			"margin": 1.0,
+			"mode": "MultinomialLogistic_StableSoftmax",
 			"loss_weight": 1.0
 		}
 	]

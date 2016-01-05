@@ -18,7 +18,7 @@ Use pre-trained models to classify a picture of a cat. MARVIN_ROOT is where the 
 4. Run demo.m
 
   ```
-  cd $(MARVIN_ROOT)/examples/imagenet
+  cd $(MARVIN_ROOT)/examples/classification
   matlab
   demo('alexnet', 'imagenet')
   ```

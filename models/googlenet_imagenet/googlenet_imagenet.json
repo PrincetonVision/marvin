@@ -34,8 +34,7 @@
                 224,
                 224
             ],
-            "file_data":"data/imagenet/train_data.tensor",
-            "file_label":"data/imagenet/train_label.tensor",
+            "file_data":["data/imagenet/train_data.tensor","data/imagenet/train_label.tensor"],
             "file_mean":"data/imagenet/train_mean_224.tensor",
             "batch_size":32,
             "out":[
@@ -52,8 +51,7 @@
                 224,
                 224
             ],
-            "file_data":"data/imagenet/val_data.tensor",
-            "file_label":"data/imagenet/val_label.tensor",
+            "file_data":["data/imagenet/val_data.tensor","data/imagenet/val_label.tensor"],
             "file_mean":"data/imagenet/train_mean_224.tensor",
             "batch_size":32,
             "out":[
