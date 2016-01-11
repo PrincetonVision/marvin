@@ -81,10 +81,11 @@
 #include <cublas_v2.h>
 #include <curand.h>
 #include <cudnn.h>
+#if !defined(_MSC_VER)
 #include <sys/time.h>
+#endif
 
 namespace marvin {
-
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Type definition
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,9 +170,13 @@ void checkCUBLAS(const int lineNumber, cublasStatus_t status) {
 }
 
 unsigned long long get_timestamp() {
+#if defined(_MSC_VER)
+	return (unsigned long long)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+#else
     struct timeval now;
     gettimeofday (&now, NULL);
     return  now.tv_usec + (unsigned long long)now.tv_sec * 1000000;
+#endif
 }
 
 unsigned long long ticBegin;
@@ -3740,7 +3745,11 @@ class DiskDataLayer : public DataLayer {
             Kernel_convert_to_StorageT_subtract<<<CUDA_GET_BLOCKS(numel_batch_all_channel_crop), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(numel_batch_all_channel_crop), numel_batch_all_channel_crop, numel_all_channel_crop, dataGPU[data_i], mean_data, out[data_i]->dataGPU);
         }
         std::swap(out[file_data.size()]->dataGPU,labelGPU);
-        lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
+#if defined(_MSC_VER)
+		lock = std::async(std::launch::async,[](DiskDataLayer<T> *ddl) { ddl->prefetch(); }, this);
+	#else		
+		lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
+#endif
     };
 
 
@@ -3783,7 +3792,11 @@ class DiskDataLayer : public DataLayer {
             memoryBytes += numel_batch_all_channel_crop * sizeof(T);
         }
 
-        lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
+#if defined(_MSC_VER)
+		lock = std::async(std::launch::async,[](DiskDataLayer<T> *ddl) { ddl->prefetch(); }, this);
+#else
+		lock = std::async(std::launch::async,&DiskDataLayer<T>::prefetch,this);
+#endif
 
         return memoryBytes;
     };  
@@ -7357,7 +7370,11 @@ public:
                 }else{
                     for (int t=0; t<threads.size(); ++t){
                         nets[t]->phase = Testing;
-                        threads[t] = std::thread(&Net::stepTest, nets[t], true);    //nets[t]->stepTest();
+#if defined(_MSC_VER)
+						threads[t] = std::thread([](Net *net, bool flag) { net->stepTest(flag); }, nets[t], true);
+#else
+						threads[t] = std::thread(&Net::stepTest, nets[t], true);    //nets[t]->stepTest();
+#endif
                     }
                     for (int t=0; t<threads.size(); ++t){
                         threads[t].join();
@@ -7383,7 +7400,11 @@ public:
                 nets[0]->stepTrain(false);
             }else{
                 for (int t=0; t<threads.size(); ++t){
-                    threads[t] = std::thread(&Net::stepTrain, nets[t], true);   //nets[t]->stepTrain();
+#if defined(_MSC_VER)
+					threads[t] = std::thread([](Net *net, bool flag) { net->stepTrain(flag); }, nets[t], true);
+#else
+					threads[t] = std::thread(&Net::stepTrain, nets[t], true);   //nets[t]->stepTrain();
+#endif
                 }
                 for (int t=0; t<threads.size(); ++t){
                     threads[t].join();
@@ -7406,7 +7427,11 @@ public:
                     nets[0]->eval(false);
                 }else{
                     for (int t=0; t<threads.size(); ++t){
-                        threads[t] = std::thread(&Net::eval, nets[t], true); //nets[t]->eval();
+#if defined(_MSC_VER)
+						threads[t] = std::thread([](Net *net, bool flag) { net->eval(flag); }, nets[t], true);
+#else
+						threads[t] = std::thread(&Net::eval, nets[t], true); //nets[t]->eval();
+#endif
                     }
                     for (int t=0; t<threads.size(); ++t){
                         threads[t].join();
