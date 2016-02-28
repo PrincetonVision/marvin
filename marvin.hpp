@@ -6263,6 +6263,8 @@ public:
                 mode,
                 one,
                 zero,
+                one,
+                zero,
                 in[0]->getDesc(),
                 in[0]->dataGPU,
                 out[0]->getDesc(),
