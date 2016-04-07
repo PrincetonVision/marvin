@@ -1,3 +1,6 @@
+v0.1.2
+- Update cuDNN to v5
+
 v0.1.1
 - Update cuDNN from v3 to v4rc
 - Add fflush to write files in case some layer future layer crashes the program

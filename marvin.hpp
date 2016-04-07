@@ -3880,6 +3880,7 @@ public:
 
         checkCUDNN(__LINE__,cudnnSetFilterNdDescriptor(filter_desc,
                                                     CUDNNStorageT,
+                                                    CUDNN_TENSOR_NCHW,
                                                     weight_dim.size(),
                                                     &weight_dim_group[0]) );
 
@@ -3976,8 +3977,8 @@ public:
 
             }
 
-            if (bias_dim.size()<=5){ // cudnnAddTensor_v3 only support upto 5 dimensions
-                checkCUDNN(__LINE__,cudnnAddTensor_v3(cudnnHandle,
+            if (bias_dim.size()<=5){ 
+                checkCUDNN(__LINE__,cudnnAddTensor(cudnnHandle,
                                               one,
                                               bias_desc,
                                               bias_dataGPU,
@@ -4378,16 +4379,27 @@ public:
 };
 
 class ActivationLayer : public Layer {
+    cudnnActivationDescriptor_t activationDesc;
 public:
     cudnnActivationMode_t mode;
 
-    ActivationLayer(std::string name_, cudnnActivationMode_t mode_): Layer(name_), mode(mode_) {};
+    ActivationLayer(std::string name_, cudnnActivationMode_t mode_): Layer(name_), mode(mode_) {
+        cudnnCreateActivationDescriptor(&activationDesc);
+        cudnnSetActivationDescriptor(activationDesc, mode, CUDNN_PROPAGATE_NAN, 99.0); // TODO: may need to change
+    };
 
     ActivationLayer(JSON* json){
         SetOrDie(json, name)
         SetValue(json, mode,                CUDNN_ACTIVATION_RELU)
         SetValue(json, phase,               TrainingTesting)
+
+        cudnnCreateActivationDescriptor(&activationDesc);
+        cudnnSetActivationDescriptor(activationDesc, mode, CUDNN_PROPAGATE_NAN, 99.0); // TODO: Refactor duplicate code
     };
+
+    ~ActivationLayer() {
+        checkCUDNN(__LINE__,cudnnDestroyActivationDescriptor(activationDesc));
+    }
 
     size_t Malloc(Phase phase_){
         size_t memoryBytes = 0;
@@ -4410,7 +4422,7 @@ public:
         for (int i=0;i<in.size();++i){
             // CUDNN bug
             checkCUDNN(__LINE__,cudnnActivationForward(cudnnHandle,
-                                                mode,
+                                                activationDesc,
                                                 one,
                                                 in[i]->desc, in[i]->dataGPU,
                                                 zero,
@@ -4422,7 +4434,7 @@ public:
             // if bottom still needs to compute gradients
             if (in[i]->need_diff){
                 checkCUDNN(__LINE__,cudnnActivationBackward(cudnnHandle,
-                                                    mode,
+                                                    activationDesc,
                                                     one,
                                                     out[i]->desc, out[i]->dataGPU, out[i]->desc, out[i]->diffGPU,
                                                     in[i]->desc, in[i]->dataGPU,
@@ -4445,6 +4457,7 @@ public:
         checkCUDNN(__LINE__,cudnnCreatePoolingDescriptor(&desc) );
         checkCUDNN(__LINE__,cudnnSetPoolingNdDescriptor(desc,
                                                 mode,
+                                                CUDNN_PROPAGATE_NAN,
                                                 window.size(),
                                                 &window[0],
                                                 &padding[0],
