@@ -1,5 +1,6 @@
 v0.1.2
 - Update cuDNN to v5
+- Expose convolution algorithms cudnnConvolutionFwdAlgo_t, cudnnConvolutionBwdDataAlgo_t, cudnnConvolutionBwdFilterAlgo_t
 
 v0.1.1
 - Update cuDNN from v3 to v4rc

@@ -575,6 +575,36 @@ public:
         else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
     };
 
+    void set(std::string name, cudnnConvolutionFwdAlgo_t &variable, cudnnConvolutionFwdAlgo_t default_value){
+        if (this->member.find(name) == this->member.end())                                  variable = default_value;
+        else if (0 == this->member[name]->returnString().compare("implicit_gemm"))          variable = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+        else if (0 == this->member[name]->returnString().compare("implicit_precomp_gemm"))  variable = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+        else if (0 == this->member[name]->returnString().compare("gemm"))                   variable = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
+        else if (0 == this->member[name]->returnString().compare("direct"))                 variable = CUDNN_CONVOLUTION_FWD_ALGO_DIRECT;
+        else if (0 == this->member[name]->returnString().compare("fft"))                    variable = CUDNN_CONVOLUTION_FWD_ALGO_FFT;
+        else if (0 == this->member[name]->returnString().compare("fft_tiling"))             variable = CUDNN_CONVOLUTION_FWD_ALGO_FFT_TILING;
+        else if (0 == this->member[name]->returnString().compare("winograd"))               variable = CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD;
+        else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
+    };
+
+    void set(std::string name, cudnnConvolutionBwdDataAlgo_t &variable, cudnnConvolutionBwdDataAlgo_t default_value){
+        if (this->member.find(name) == this->member.end())                                  variable = default_value;
+        else if (0 == this->member[name]->returnString().compare("0"))                      variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+        else if (0 == this->member[name]->returnString().compare("1"))                      variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
+        else if (0 == this->member[name]->returnString().compare("fft"))                    variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT;
+        else if (0 == this->member[name]->returnString().compare("fft_tiling"))             variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT_TILING;
+        else if (0 == this->member[name]->returnString().compare("winograd"))               variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD;
+        else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
+    };
+
+    void set(std::string name, cudnnConvolutionBwdFilterAlgo_t &variable, cudnnConvolutionBwdFilterAlgo_t default_value){
+        if (this->member.find(name) == this->member.end())                                  variable = default_value;
+        else if (0 == this->member[name]->returnString().compare("0"))                      variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
+        else if (0 == this->member[name]->returnString().compare("1"))                      variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+        else if (0 == this->member[name]->returnString().compare("fft"))                    variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT;
+        else if (0 == this->member[name]->returnString().compare("3"))                      variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_3;
+        else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
+    };
 
     void print(){
         switch(type){
@@ -3795,6 +3825,10 @@ class ConvolutionLayer : public Layer {
     cudnnTensorDescriptor_t bias_desc;
     cudnnConvolutionDescriptor_t conv_desc;
 public:
+    cudnnConvolutionFwdAlgo_t fwdAlgo;
+    cudnnConvolutionBwdDataAlgo_t bwdDataAlgo;
+    cudnnConvolutionBwdFilterAlgo_t bwdFilterAlgo;
+
     int num_output;
     std::vector<int> window;
     std::vector<int> stride;
@@ -3832,6 +3866,9 @@ public:
         SetValue(json, padding,             zeros)
         SetValue(json, stride,              ones)
         SetValue(json, upscale,             ones)
+        SetValue(json, fwdAlgo,             CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM)
+        SetValue(json, bwdDataAlgo,         CUDNN_CONVOLUTION_BWD_DATA_ALGO_0)
+        SetValue(json, bwdFilterAlgo,       CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0)
 
         init();
     };
@@ -3966,9 +4003,7 @@ public:
                                                       filter_desc,
                                                       weight_dataGPU + (g * weight_numel / group),
                                                       conv_desc,
-                                                      //CUDNN_CONVOLUTION_FWD_ALGO_DIRECT,
-                                                      CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM,
-                                                      // CUDNN For 3-d convolutions, only CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM is supported; support is provided for any format for srcDesc and destDesc as well as support for all data type configurations.
+                                                      fwdAlgo, // CUDNN For 3-d convolutions, only CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM is supported; support is provided for any format for srcDesc and destDesc as well as support for all data type configurations.
                                                       NULL,
                                                       0,
                                                       zero,
@@ -4042,7 +4077,7 @@ public:
                                                               filter_desc, weight_dataGPU + (g * weight_numel / group),
                                                               out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                               conv_desc,
-                                                              CUDNN_CONVOLUTION_BWD_DATA_ALGO_0, NULL, 0,
+                                                              bwdDataAlgo, NULL, 0,
                                                               one,
                                                               in[i]->getDesc(group), in[i]->diffGPU + (g * in[i]->sizeofitem() / group)));
                 }
@@ -4059,7 +4094,7 @@ public:
                                                                   in[i]->getDesc(group), in[i]->dataGPU + (g * in[i]->sizeofitem() / group),
                                                                   out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                                   conv_desc,
-                                                                  CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0, NULL, 0,
+                                                                  bwdFilterAlgo, NULL, 0,
                                                                   &beta,
                                                                   filter_desc, weight_diffGPU + (g * weight_numel / group)));
                     }
