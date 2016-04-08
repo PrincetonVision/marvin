@@ -3863,6 +3863,14 @@ class ConvolutionLayer : public Layer {
     cudnnFilterDescriptor_t filter_desc;
     cudnnTensorDescriptor_t bias_desc;
     cudnnConvolutionDescriptor_t conv_desc;
+
+    std::vector<StorageT *> fwdAlgoWorkspaces;
+    std::vector<StorageT *> bwdDataAlgoWorkspaces;
+    std::vector<StorageT *> bwdFilterAlgoWorkspaces;
+
+    std::vector<size_t> fwdAlgoWorkspaceSizes;
+    std::vector<size_t> bwdDataAlgoWorkspaceSizes;
+    std::vector<size_t> bwdFilterAlgoWorkspaceSizes;
 public:
     cudnnConvolutionFwdAlgo_t fwdAlgo;
     cudnnConvolutionBwdDataAlgo_t bwdDataAlgo;
@@ -3931,6 +3939,7 @@ public:
 
         init();
     };
+
     size_t Malloc(Phase phase_){
         size_t memoryBytes = 0;
         train_me = train_me && phase_ != Testing;
@@ -3981,21 +3990,17 @@ public:
                                                     &bias_stride[0]) );
 
 
-
-
-
-
         weight_numel = numel(weight_dim);
         bias_numel   = numel(bias_dim);
 
         if (weight_numel>0){
             std::cout<<" weight"; veciPrint(weight_dim);
-            checkCUDA(__LINE__, cudaMalloc( &weight_dataGPU, weight_numel * sizeofStorageT * 100) );
+            checkCUDA(__LINE__, cudaMalloc( &weight_dataGPU, weight_numel * sizeofStorageT) );
             memoryBytes += weight_numel * sizeofStorageT;
         }
         if (bias_numel>0){
             std::cout<<" bias"; veciPrint(bias_dim);
-            checkCUDA(__LINE__, cudaMalloc( &bias_dataGPU, bias_numel * sizeofStorageT * 100) );
+            checkCUDA(__LINE__, cudaMalloc( &bias_dataGPU, bias_numel * sizeofStorageT) );
             memoryBytes += bias_numel * sizeofStorageT;
         }
         std::cout<<std::endl;
@@ -4028,6 +4033,48 @@ public:
 
 
         }
+
+        // Allocate workspace
+        fwdAlgoWorkspaces.resize(in.size());
+        bwdDataAlgoWorkspaces.resize(out.size());
+        bwdFilterAlgoWorkspaces.resize(out.size());
+
+        fwdAlgoWorkspaceSizes.resize(in.size());
+        bwdDataAlgoWorkspaceSizes.resize(out.size());
+        bwdFilterAlgoWorkspaceSizes.resize(out.size());
+
+        for (int i=0;i<in.size();++i){
+            checkCUDNN(__LINE__,cudnnGetConvolutionForwardWorkspaceSize(cudnnHandle,
+                                                                        in[i]->getDesc(group),
+                                                                        filter_desc,
+                                                                        conv_desc,
+                                                                        out[i]->getDesc(group),
+                                                                        fwdAlgo,
+                                                                        &fwdAlgoWorkspaceSizes[i]));
+            checkCUDA(__LINE__, cudaMalloc( &fwdAlgoWorkspaces[i], fwdAlgoWorkspaceSizes[i]) );
+        }
+
+        for (int i=0;i<out.size();++i){
+            checkCUDNN(__LINE__,cudnnGetConvolutionBackwardDataWorkspaceSize(cudnnHandle,
+                                                                             filter_desc,
+                                                                             out[i]->getDesc(group),
+                                                                             conv_desc,
+                                                                             in[i]->getDesc(group),
+                                                                             bwdDataAlgo,
+                                                                             &bwdDataAlgoWorkspaceSizes[i]));
+
+            checkCUDNN(__LINE__,cudnnGetConvolutionBackwardFilterWorkspaceSize(cudnnHandle,
+                                                                               in[i]->getDesc(group),
+                                                                               out[i]->getDesc(group),
+                                                                               conv_desc,
+                                                                               filter_desc,
+                                                                               bwdFilterAlgo,
+                                                                               &bwdFilterAlgoWorkspaceSizes[i]));
+
+            checkCUDA(__LINE__, cudaMalloc( &bwdDataAlgoWorkspaces[i], bwdDataAlgoWorkspaceSizes[i]) );
+            checkCUDA(__LINE__, cudaMalloc( &bwdFilterAlgoWorkspaces[i], bwdFilterAlgoWorkspaceSizes[i]) );
+        }
+
         return memoryBytes;
     };
 
@@ -4043,8 +4090,8 @@ public:
                                                       weight_dataGPU + (g * weight_numel / group),
                                                       conv_desc,
                                                       fwdAlgo, // CUDNN For 3-d convolutions, only CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM is supported; support is provided for any format for srcDesc and destDesc as well as support for all data type configurations.
-                                                      NULL,
-                                                      0,
+                                                      fwdAlgoWorkspaces[i],
+                                                      fwdAlgoWorkspaceSizes[i],
                                                       zero,
                                                       out[i]->getDesc(group),
                                                       out[i]->dataGPU + (g * out[i]->sizeofitem() / group) ) );
@@ -4107,7 +4154,7 @@ public:
         }
     };
     void backward(Phase phase_){
-        for (int i=0;i<in.size();++i){
+        for (int i=0;i<out.size();++i){
             // if bottom still needs to compute gradients
             if (in[i]->need_diff){
                 for (int g = 0; g < group; g++) {
@@ -4116,14 +4163,14 @@ public:
                                                               filter_desc, weight_dataGPU + (g * weight_numel / group),
                                                               out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                               conv_desc,
-                                                              bwdDataAlgo, NULL, 0,
+                                                              bwdDataAlgo, bwdDataAlgoWorkspaces[i], bwdDataAlgoWorkspaceSizes[i],
                                                               one,
                                                               in[i]->getDesc(group), in[i]->diffGPU + (g * in[i]->sizeofitem() / group)));
                 }
             }
         }
         // compute in->diff first because the next layer need to use it immediate, and because weight_diff needs to write to another GPU
-        for (int i=0;i<in.size();++i){
+        for (int i=0;i<out.size();++i){
             if (train_me){
                 ComputeT beta = ComputeT(1);
                 if (weight_numel>0){
@@ -4133,7 +4180,7 @@ public:
                                                                   in[i]->getDesc(group), in[i]->dataGPU + (g * in[i]->sizeofitem() / group),
                                                                   out[i]->getDesc(group), out[i]->diffGPU + (g * out[i]->sizeofitem() / group),
                                                                   conv_desc,
-                                                                  bwdFilterAlgo, NULL, 0,
+                                                                  bwdFilterAlgo, bwdFilterAlgoWorkspaces[i], bwdFilterAlgoWorkspaceSizes[i],
                                                                   &beta,
                                                                   filter_desc, weight_diffGPU + (g * weight_numel / group)));
                     }
@@ -4153,6 +4200,14 @@ public:
         checkCUDNN(__LINE__,cudnnDestroyFilterDescriptor(filter_desc) );
         checkCUDNN(__LINE__,cudnnDestroyTensorDescriptor(bias_desc) );
         checkCUDNN(__LINE__,cudnnDestroyConvolutionDescriptor(conv_desc) );
+
+        for (int i=0;i<in.size();++i){
+            checkCUDA(__LINE__, cudaFree(fwdAlgoWorkspaces[i]));
+        }
+        for (int i=0;i<out.size();++i){
+            checkCUDA(__LINE__, cudaFree(bwdDataAlgoWorkspaces[i]));
+            checkCUDA(__LINE__, cudaFree(bwdFilterAlgoWorkspaces[i]));
+        }
     };
 };
 
