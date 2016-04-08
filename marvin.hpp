@@ -4355,23 +4355,25 @@ public:
     };
 };
 
-
 class DropoutLayer: public Layer{
-    ComputeT scale;
-    unsigned int threshold;
-    std::vector< unsigned int * > GPUmask;
-    std::vector<int > BYTESmask;
+    std::vector<cudnnDropoutDescriptor_t> dropoutDescs;
+    std::vector<StorageT *> states;
+    std::vector<StorageT *> reserveSpaces;
+    std::vector<size_t> stateSizes;
+    std::vector<size_t> reserveSpaceSizes;
+
     std::vector<int > SIZEmask;
-    curandGenerator_t generator;
 public:
     ComputeT dropout_rate;
     void init(){
-        scale = 1. / (1. - dropout_rate);
-        threshold = ComputeT(UINT_MAX) * dropout_rate;
-        std::random_device rd;
-        if ( curandCreateGenerator(&generator,CURAND_RNG_PSEUDO_DEFAULT) != CURAND_STATUS_SUCCESS || curandSetPseudoRandomGeneratorSeed(generator,rd())!= CURAND_STATUS_SUCCESS ){
-            std::cerr<<"Cannot initialize Curand"<<std::endl;
-            FatalError(__LINE__);
+        dropoutDescs.resize(in.size());
+        states.resize(in.size());
+        reserveSpaces.resize(in.size());
+        stateSizes.resize(in.size());
+        reserveSpaceSizes.resize(in.size());
+
+        for (int i=0;i<in.size();++i){
+            checkCUDNN(__LINE__,cudnnCreateDropoutDescriptor(&dropoutDescs[i]));
         }
     };
     DropoutLayer(std::string name_, ComputeT dropout_rate_): Layer(name_), dropout_rate(dropout_rate_){
@@ -4389,33 +4391,56 @@ public:
         std::cout<<name<<std::endl;
         if (in.size()==0) { std::cout<<std::endl<<"DropoutLayer in shouldn't be empty"<<std::endl; FatalError(__LINE__); }
         if (in.size()!=out.size()) { std::cout<<std::endl<<"DropoutLayer #in should be the same as #out"<<std::endl; FatalError(__LINE__); }
-        GPUmask.resize(out.size());
-        BYTESmask.resize(out.size());
+
         SIZEmask.resize(out.size());
         for (int i=0;i<out.size();++i){
             SIZEmask [i] = numel(in[i]->dim);
-            BYTESmask[i] = sizeof(unsigned int) * SIZEmask[i];
-            memoryBytes += BYTESmask[i];
-            checkCUDA(__LINE__, cudaMalloc(&GPUmask[i], BYTESmask[i]) );
+
             out[i]->need_diff = in[i]->need_diff;
             out[i]->receptive_field = in[i]->receptive_field;
             out[i]->receptive_gap = in[i]->receptive_gap;
             out[i]->receptive_offset = in[i]->receptive_offset;
             memoryBytes += out[i]->Malloc(in[i]->dim);
         }
+
+        std::random_device rd;
+
+        for (int i=0;i<in.size();++i){
+            checkCUDNN(__LINE__,cudnnDropoutGetStatesSize(cudnnHandle, &stateSizes[i]));
+            checkCUDA(__LINE__,cudaMalloc(&states[i], stateSizes[i]) );
+            memoryBytes += stateSizes[i];
+            checkCUDNN(__LINE__,cudnnDropoutGetReserveSpaceSize(in[i]->getDesc(), &reserveSpaceSizes[i]));
+            checkCUDA(__LINE__,cudaMalloc(&reserveSpaces[i], reserveSpaceSizes[i]));
+            memoryBytes += reserveSpaceSizes[i];
+            checkCUDNN(__LINE__,cudnnSetDropoutDescriptor(dropoutDescs[i],
+                                                          cudnnHandle,
+                                                          dropout_rate,
+                                                          states[i],
+                                                          stateSizes[i],
+                                                          rd()));
+        }
+
         return memoryBytes;
     };
     ~DropoutLayer(){
-        for (int i=0;i<GPUmask.size();++i){
-            checkCUDA(__LINE__, cudaFree(GPUmask[i]) );
+        for (int i=0;i<in.size();++i){
+            checkCUDNN(__LINE__,cudnnDestroyDropoutDescriptor(dropoutDescs[i]));
+            checkCUDA(__LINE__, cudaFree(states[i]));
+            checkCUDA(__LINE__, cudaFree(reserveSpaces[i]));
         }
     };
     void forward(Phase phase_){
         if ( phase_==Training ){
             for (int i=0;i<in.size();++i){
-                curandGenerate(generator, GPUmask[i], SIZEmask[i]);
-                Kernel_dropout_forward<<<CUDA_GET_BLOCKS(SIZEmask[i]), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(SIZEmask[i]),SIZEmask[i],out[i]->dataGPU, GPUmask[i], in[i]->dataGPU, threshold, scale);
-                checkCUDA(__LINE__,cudaGetLastError());
+                checkCUDNN(__LINE__,cudnnDropoutForward(cudnnHandle,
+                                                        dropoutDescs[i],
+                                                        in[i]->getDesc(),
+                                                        in[i]->dataGPU,
+                                                        out[i]->getDesc(),
+                                                        out[i]->dataGPU,
+                                                        reserveSpaces[i],
+                                                        reserveSpaceSizes[i]
+                                                        ));
             }
         }else{
             for (int i=0;i<in.size();++i){
@@ -4428,9 +4453,15 @@ public:
     void backward(Phase phase_){
         if ( phase_==Training ){
             for (int i=0;i<in.size();++i){
-                if (in[i]->need_diff){
-                    Kernel_dropout_backward<<<CUDA_GET_BLOCKS(SIZEmask[i]), CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(SIZEmask[i]),SIZEmask[i],out[i]->dataGPU, GPUmask[i], in[i]->dataGPU, threshold, scale);
-                }
+                checkCUDNN(__LINE__,cudnnDropoutBackward(cudnnHandle,
+                                                         dropoutDescs[i],
+                                                         out[i]->getDesc(),
+                                                         out[i]->diffGPU,
+                                                         in[i]->getDesc(),
+                                                         in[i]->diffGPU,
+                                                         reserveSpaces[i],
+                                                         reserveSpaceSizes[i]
+                                                         ));
             }
         }else{
             std::cerr<<"there should be no backward for testing"<<std::endl;
