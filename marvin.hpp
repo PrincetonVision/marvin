@@ -3990,12 +3990,12 @@ public:
 
         if (weight_numel>0){
             std::cout<<" weight"; veciPrint(weight_dim);
-            checkCUDA(__LINE__, cudaMalloc( &weight_dataGPU, weight_numel * sizeofStorageT) );
+            checkCUDA(__LINE__, cudaMalloc( &weight_dataGPU, weight_numel * sizeofStorageT * 100) );
             memoryBytes += weight_numel * sizeofStorageT;
         }
         if (bias_numel>0){
             std::cout<<" bias"; veciPrint(bias_dim);
-            checkCUDA(__LINE__, cudaMalloc( &bias_dataGPU, bias_numel * sizeofStorageT) );
+            checkCUDA(__LINE__, cudaMalloc( &bias_dataGPU, bias_numel * sizeofStorageT * 100) );
             memoryBytes += bias_numel * sizeofStorageT;
         }
         std::cout<<std::endl;
@@ -4457,18 +4457,12 @@ class ActivationLayer : public Layer {
 public:
     cudnnActivationMode_t mode;
 
-    ActivationLayer(std::string name_, cudnnActivationMode_t mode_): Layer(name_), mode(mode_) {
-        cudnnCreateActivationDescriptor(&activationDesc);
-        cudnnSetActivationDescriptor(activationDesc, mode, CUDNN_PROPAGATE_NAN, 99.0); // TODO: may need to change
-    };
+    ActivationLayer(std::string name_, cudnnActivationMode_t mode_): Layer(name_), mode(mode_) {};
 
     ActivationLayer(JSON* json){
         SetOrDie(json, name)
         SetValue(json, mode,                CUDNN_ACTIVATION_RELU)
         SetValue(json, phase,               TrainingTesting)
-
-        cudnnCreateActivationDescriptor(&activationDesc);
-        cudnnSetActivationDescriptor(activationDesc, mode, CUDNN_PROPAGATE_NAN, 99.0); // TODO: Refactor duplicate code
     };
 
     ~ActivationLayer() {
@@ -4479,6 +4473,9 @@ public:
         size_t memoryBytes = 0;
         std::cout<< (train_me? "* " : "  ");
         std::cout<<name<<std::endl;
+
+        checkCUDNN(__LINE__,cudnnCreateActivationDescriptor(&activationDesc));
+        checkCUDNN(__LINE__,cudnnSetActivationDescriptor(activationDesc, mode, CUDNN_PROPAGATE_NAN, 99.0)); // TODO: Refactor duplicate code
 
         if (in.size()==0) { std::cout<<std::endl<<"ActivationLayer in shouldn't be empty"<<std::endl; FatalError(__LINE__); }
         if (in.size()!=out.size()) { std::cout<<std::endl<<"ActivationLayer #in should be the same as #out"<<std::endl; FatalError(__LINE__); }
