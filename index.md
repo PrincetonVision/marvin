@@ -9,7 +9,7 @@ Never before has it been so easy to learn so deeply. Marvin was born to be hacke
 
 #### 1. Find a home for Marvin
 
-Marvin's life depends on an NVIDIA GPU with [CUDA 7.5](http://lmgtfy.com/?q=install+cuda+7.5) and [cuDNN 4rc](http://lmgtfy.com/?q=install+cuDNN+4). See the [README](https://github.com/PrincetonVision/marvin) for more details on path wrangling.
+Marvin's life depends on an NVIDIA GPU with [CUDA 7.5](http://lmgtfy.com/?q=install+cuda+7.5) and [cuDNN 5](http://lmgtfy.com/?q=install+cuDNN+5). See the [README](https://github.com/PrincetonVision/marvin) for more details on path wrangling.
 
 #### 2. Grab him from the cloud
 
