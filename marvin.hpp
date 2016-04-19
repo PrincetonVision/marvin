@@ -4366,12 +4366,6 @@ class DropoutLayer: public Layer{
 public:
     ComputeT dropout_rate;
     void init(){
-        dropoutDescs.resize(in.size());
-        states.resize(in.size());
-        reserveSpaces.resize(in.size());
-        stateSizes.resize(in.size());
-        reserveSpaceSizes.resize(in.size());
-
         for (int i=0;i<in.size();++i){
             checkCUDNN(__LINE__,cudnnCreateDropoutDescriptor(&dropoutDescs[i]));
         }
@@ -4386,6 +4380,12 @@ public:
         init();
     };
     size_t Malloc(Phase phase_){
+        dropoutDescs.resize(in.size());
+        states.resize(in.size());
+        reserveSpaces.resize(in.size());
+        stateSizes.resize(in.size());
+        reserveSpaceSizes.resize(in.size());
+        
         size_t memoryBytes = 0;
         std::cout<< (train_me? "* " : "  ");
         std::cout<<name<<std::endl;
