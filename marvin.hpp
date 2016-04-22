@@ -4714,10 +4714,8 @@ class DropoutLayer: public Layer{
     std::vector<int > SIZEmask;
 public:
     ComputeT dropout_rate;
-    void init(){
-        for (int i=0;i<in.size();++i){
-            checkCUDNN(__LINE__,cudnnCreateDropoutDescriptor(&dropoutDescs[i]));
-        }
+    void init() {
+        // This function is empty for now 
     };
     DropoutLayer(std::string name_, ComputeT dropout_rate_): Layer(name_), dropout_rate(dropout_rate_){
         init();
@@ -4734,6 +4732,10 @@ public:
         reserveSpaces.resize(in.size());
         stateSizes.resize(in.size());
         reserveSpaceSizes.resize(in.size());
+        
+        for (int i=0;i<in.size();++i){
+            checkCUDNN(__LINE__,cudnnCreateDropoutDescriptor(&dropoutDescs[i]));
+        }
         
         size_t memoryBytes = 0;
         std::cout<< (train_me? "* " : "  ");
