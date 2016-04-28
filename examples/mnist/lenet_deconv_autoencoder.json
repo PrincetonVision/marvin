@@ -1,0 +1,222 @@
+{
+	"train":
+		{
+			"path": "examples/mnist/lenet_deconv_autoencoder",
+			"solver": "SGD",
+			"regularizer": "L2",
+			"momentum": 0.9,
+			"weight_decay": 0.0005,
+			"base_lr": 0.01,
+			"lr_policy": "LR_inv",
+			"lr_gamma": 0.0001,
+			"lr_power": 0.75,
+			"max_iter": 100000,
+			"train_iter": 1,
+			"snapshot_iter": 5000,
+			"display_iter": 10,
+			"test_iter": 1,
+			"test_interval": 500,
+			"debug_mode": false,
+			"GPU_solver": 0,
+			"GPU": [0]
+		},
+	"test":
+		{
+			"debug_mode": false,
+			"GPU": 0
+		},
+	"layers":[
+		{
+			"type": "MemoryData",
+			"name": "dataTrain",
+			"phase": "Training",
+			"file_data": ["examples/mnist/train-images.tensor","examples/mnist/train-labels.tensor"],
+			"batch_size": 100,
+			"out": ["data","label"]
+		},
+		{
+			"type": "MemoryData",
+			"name": "dataTest",
+			"phase": "Testing",
+			"file_data": ["examples/mnist/test-images.tensor","examples/mnist/test-labels.tensor"],
+			"batch_size": 100,
+			"out": ["data","label"]
+		},
+		{
+			"in": ["data"],
+			"type": "Convolution",
+			"name": "conv1",
+			"num_output": 8,
+			"window": [9,9],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv1"]
+		},
+		{
+			"in": ["conv1"],
+			"type": "Activation",
+			"name": "sig1en",
+			"mode": "Sigmoid",
+			"out": ["conv1"]
+		},
+		{
+			"in": ["conv1"],
+			"type": "Convolution",
+			"name": "conv2",
+			"num_output": 4,
+			"window": [9,9],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv2"]
+		},
+		{
+			"in": ["conv2"],
+			"type": "Activation",
+			"name": "sig2en",
+			"mode": "Sigmoid",
+			"out": ["conv2"]
+		},
+		{
+			"in": ["conv2"],
+			"type": "InnerProduct",
+			"name": "ip1encode",
+			"num_output": 250,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 1.0,
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["ip1encode"]
+		},
+		{
+			"in": ["ip1encode"],
+			"type": "Activation",
+			"name": "sig3en",
+			"mode": "Sigmoid",
+			"out": ["ip1encode"]
+		},
+		{
+			"in": ["ip1encode"],
+			"type": "InnerProduct",
+			"name": "ip2encode",
+			"num_output": 30,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 1.0,
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["ip2encode"]
+		},
+		{
+			"in": ["ip2encode"],
+			"type": "InnerProduct",
+			"name": "ip1decode",
+			"num_output": 250,
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 1.0,
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["ip1decode"]
+		},
+		{
+			"in": ["ip1decode"],
+			"type": "Activation",
+			"name": "sig3de",
+			"mode": "Sigmoid",
+			"out": ["ip1decode"]
+		},
+		{
+			"in": ["ip1decode"],
+			"type": "Deconvolution",
+			"name": "deconv2",
+			"num_output": 4,
+			"window": [12,12],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 1.0,
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["deconv2"]
+		},
+		{
+			"in": ["deconv2"],
+			"type": "Activation",
+			"name": "sig2de",
+			"mode": "Sigmoid",
+			"out": ["deconv2"]
+		},
+		{
+			"in": ["deconv2"],
+			"type": "Deconvolution",
+			"name": "deconv1",
+			"num_output": 4,
+			"window": [17,17],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["deconv1"]
+		},
+		{
+			"in": ["deconv1"],
+			"type": "Activation",
+			"name": "sig1de",
+			"mode": "Sigmoid",
+			"out": ["deconv1"]
+		},
+		{
+			"in": ["deconv1"],
+			"type": "Deconvolution",
+			"name": "deconv1neur",
+			"num_output": 1,
+			"window": [1,1],
+			"padding": [0,0],
+			"stride": [1,1],
+			"upscale": [1,1],
+			"weight_lr_mult": 1.0,
+			"weight_filler": "Xavier",
+			"bias_lr_mult": 3.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["deconv1neur"]
+		},
+		{
+			"in": ["deconv1neur"],
+			"type": "Activation",
+			"name": "deconv1neur",
+			"mode": "Sigmoid",
+			"out": ["deconv1neur"]
+		},
+		{
+			"in": ["deconv1neur","data"],
+			"type": "Loss",
+			"name": "loss_recon",
+			"mode": "EuclideanSSE",
+			"loss_weight": 1.0
+		}
+	]
+}
