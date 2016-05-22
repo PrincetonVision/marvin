@@ -2100,7 +2100,6 @@ __global__ void Kernel_update_RMSpropL1(size_t CUDA_NUM_LOOPS, size_t N, int nNe
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g;
