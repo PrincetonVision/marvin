@@ -1404,22 +1404,6 @@ void GPU_set_zeros(size_t N, StorageT* GPUdst){
     GPU_set_value(N, GPUdst, CPUCompute2StorageT(0));
 }
 
-__global__ void Kernel_dropout_forward(size_t CUDA_NUM_LOOPS, size_t N, StorageT* GPUdst, const unsigned int* GPUmask, const StorageT* GPUsrc, unsigned int threshold, ComputeT scale){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
-    if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
-        GPUdst[idx] = GPUCompute2StorageT( (GPUmask[idx]>threshold) * scale * GPUStorage2ComputeT(GPUsrc[idx]));
-    }
-}
-
-__global__ void Kernel_dropout_backward(size_t CUDA_NUM_LOOPS, size_t N, StorageT* GPUdst, const unsigned int* GPUmask, const StorageT* GPUsrc, unsigned int threshold, ComputeT scale){
-    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
-    if (idxBase >= N) return;
-    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
-        GPUdst[idx] = GPUCompute2StorageT( ((GPUmask[idx]>threshold) * scale * GPUStorage2ComputeT(GPUsrc[idx])) + GPUStorage2ComputeT(GPUdst[idx]) );
-    }
-}
-
 __global__ void Kernel_elementwise_multiplication(size_t CUDA_NUM_LOOPS, size_t N, StorageT* GPUdst, const StorageT* GPUsrcA, const StorageT* GPUsrcB){
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x));
     if (idxBase >= N) return;
