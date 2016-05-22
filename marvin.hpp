@@ -13,8 +13,8 @@
     #define sizeofComputeT 4
     #define CUDNNStorageT CUDNN_DATA_HALF
     #define CUDNNConvComputeT CUDNN_DATA_FLOAT
-    #define CPUStorage2ComputeT(x) (cpu_half2float(x))
-    #define CPUCompute2StorageT(x) (cpu_float2half(x))
+    #define CPUStorage2ComputeT(x) (marvin::cpu_half2float(x))
+    #define CPUCompute2StorageT(x) (marvin::cpu_float2half(x))
     #define GPUStorage2ComputeT(x) (__half2float(x))
     #define GPUCompute2StorageT(x) (__float2half(x))
     #define GPUgemm Hgemm
@@ -1635,10 +1635,10 @@ __global__ void Kernel_ROIPoolForward_2D(size_t CUDA_NUM_LOOPS, size_t N, const 
 
         int roi_5n = n*5;
         int roi_batch_ind = GPUStorage2ComputeT(in_rois[roi_5n+0]);
-        int roi_start_h = round(GPUStorage2ComputeT(in_rois[roi_5n+1]) * spatial_scale);
-        int roi_end_h = round(GPUStorage2ComputeT(in_rois[roi_5n+2]) * spatial_scale);
-        int roi_start_w = round(GPUStorage2ComputeT(in_rois[roi_5n+3]) * spatial_scale);
-        int roi_end_w = round(GPUStorage2ComputeT(in_rois[roi_5n+4]) * spatial_scale);
+        int roi_start_h = ::round(GPUStorage2ComputeT(in_rois[roi_5n+1]) * spatial_scale);
+        int roi_end_h = ::round(GPUStorage2ComputeT(in_rois[roi_5n+2]) * spatial_scale);
+        int roi_start_w = ::round(GPUStorage2ComputeT(in_rois[roi_5n+3]) * spatial_scale);
+        int roi_end_w = ::round(GPUStorage2ComputeT(in_rois[roi_5n+4]) * spatial_scale);
 
         // Force malformed ROIs to be 1x1
         int roi_width = max(roi_end_w - roi_start_w + 1, 1);
@@ -1695,12 +1695,12 @@ __global__ void Kernel_ROIPoolForward_3D(size_t CUDA_NUM_LOOPS, size_t N, const 
 
         int roi_7n = n * 7;
         int roi_batch_ind = GPUStorage2ComputeT(in_rois[roi_7n+0]);
-        int roi_start_d = round(GPUStorage2ComputeT(in_rois[roi_7n+1]) * spatial_scale);
-        int roi_end_d = round(GPUStorage2ComputeT(in_rois[roi_7n+2]) * spatial_scale);
-        int roi_start_h = round(GPUStorage2ComputeT(in_rois[roi_7n+3]) * spatial_scale);
-        int roi_end_h = round(GPUStorage2ComputeT(in_rois[roi_7n+4]) * spatial_scale);
-        int roi_start_w = round(GPUStorage2ComputeT(in_rois[roi_7n+5]) * spatial_scale);
-        int roi_end_w = round(GPUStorage2ComputeT(in_rois[roi_7n+6]) * spatial_scale);
+        int roi_start_d = ::round(GPUStorage2ComputeT(in_rois[roi_7n+1]) * spatial_scale);
+        int roi_end_d = ::round(GPUStorage2ComputeT(in_rois[roi_7n+2]) * spatial_scale);
+        int roi_start_h = ::round(GPUStorage2ComputeT(in_rois[roi_7n+3]) * spatial_scale);
+        int roi_end_h = ::round(GPUStorage2ComputeT(in_rois[roi_7n+4]) * spatial_scale);
+        int roi_start_w = ::round(GPUStorage2ComputeT(in_rois[roi_7n+5]) * spatial_scale);
+        int roi_end_w = ::round(GPUStorage2ComputeT(in_rois[roi_7n+6]) * spatial_scale);
 
 
         // Force malformed ROIs to be 1x1
@@ -1774,10 +1774,10 @@ __global__ void Kernel_ROIPoolBackward_2D(size_t CUDA_NUM_LOOPS, size_t N, Stora
                 continue;
             }
 
-            int roi_start_h = round(GPUStorage2ComputeT(in_rois[roi_5n+1]) * spatial_scale);
-            int roi_end_h = round(GPUStorage2ComputeT(in_rois[roi_5n+2]) * spatial_scale);
-            int roi_start_w = round(GPUStorage2ComputeT(in_rois[roi_5n+3]) * spatial_scale);
-            int roi_end_w = round(GPUStorage2ComputeT(in_rois[roi_5n+4]) * spatial_scale);
+            int roi_start_h = ::round(GPUStorage2ComputeT(in_rois[roi_5n+1]) * spatial_scale);
+            int roi_end_h = ::round(GPUStorage2ComputeT(in_rois[roi_5n+2]) * spatial_scale);
+            int roi_start_w = ::round(GPUStorage2ComputeT(in_rois[roi_5n+3]) * spatial_scale);
+            int roi_end_w = ::round(GPUStorage2ComputeT(in_rois[roi_5n+4]) * spatial_scale);
 
             // Skip if ROI doesn't include (h, w)
             const bool in_roi = (w >= roi_start_w && w <= roi_end_w && h >= roi_start_h && h <= roi_end_h);
@@ -1842,12 +1842,12 @@ __global__ void Kernel_ROIPoolBackward_3D(size_t CUDA_NUM_LOOPS, size_t N, Stora
                 continue;
             }
 
-            int roi_start_d = round(GPUStorage2ComputeT(in_rois[roi_7n+1]) * spatial_scale);
-            int roi_end_d = round(GPUStorage2ComputeT(in_rois[roi_7n+2]) * spatial_scale);
-            int roi_start_h = round(GPUStorage2ComputeT(in_rois[roi_7n+3]) * spatial_scale);
-            int roi_end_h = round(GPUStorage2ComputeT(in_rois[roi_7n+4]) * spatial_scale);
-            int roi_start_w = round(GPUStorage2ComputeT(in_rois[roi_7n+5]) * spatial_scale);
-            int roi_end_w = round(GPUStorage2ComputeT(in_rois[roi_7n+6]) * spatial_scale);
+            int roi_start_d = ::round(GPUStorage2ComputeT(in_rois[roi_7n+1]) * spatial_scale);
+            int roi_end_d = ::round(GPUStorage2ComputeT(in_rois[roi_7n+2]) * spatial_scale);
+            int roi_start_h = ::round(GPUStorage2ComputeT(in_rois[roi_7n+3]) * spatial_scale);
+            int roi_end_h = ::round(GPUStorage2ComputeT(in_rois[roi_7n+4]) * spatial_scale);
+            int roi_start_w = ::round(GPUStorage2ComputeT(in_rois[roi_7n+5]) * spatial_scale);
+            int roi_end_w = ::round(GPUStorage2ComputeT(in_rois[roi_7n+6]) * spatial_scale);
 
             // Skip if ROI doesn't include (h, w)
             const bool in_roi = (w >= roi_start_w && w <= roi_end_w && h >= roi_start_h && h <= roi_end_h && d >= roi_start_d && d <= roi_end_d);
@@ -1942,7 +1942,6 @@ __global__ void Kernel_update_AdaDeltaL1(size_t CUDA_NUM_LOOPS, size_t N, int nN
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -1968,7 +1967,6 @@ __global__ void Kernel_update_AdaDeltaL2(size_t CUDA_NUM_LOOPS, size_t N, int nN
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -2026,7 +2024,6 @@ __global__ void Kernel_update_AdamL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -2049,7 +2046,6 @@ __global__ void Kernel_update_AdamL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets,
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         size_t h2_idx = N*(nNets+2)+idx;
@@ -2069,7 +2065,6 @@ __global__ void Kernel_update_NAGL1(size_t CUDA_NUM_LOOPS, size_t N, int nNets, 
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g;
@@ -2089,7 +2084,6 @@ __global__ void Kernel_update_NAGL2(size_t CUDA_NUM_LOOPS, size_t N, int nNets, 
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g  = decay * w;     // L2 regularization
@@ -2125,7 +2119,6 @@ __global__ void Kernel_update_RMSpropL2(size_t CUDA_NUM_LOOPS, size_t N, int nNe
     if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
         ComputeT w  = GPUStorage2ComputeT(weights[idx]);
-        ComputeT u  = GPUStorage2ComputeT(gradients[idx]);
         size_t h_idx = N*(nNets+1)+idx;
         ComputeT h  = GPUStorage2ComputeT(gradients[h_idx]);
         ComputeT g  = decay * w;     // L2 regularization
@@ -3522,8 +3515,51 @@ class MemoryDataLayer : public DataLayer {
     };
 };
 
+class PlaceHolderDataLayer : public DataLayer {
+    public:
+    std::vector<int> dim;
 
+    int numofitems(){
+        return 1;
+    };
+    void init(){
+        train_me = false;
+        std::cout<<"PlaceHolderDataLayer "<<name<<std::endl;
+    };
 
+    PlaceHolderDataLayer(std::string name_, Phase phase_): DataLayer(name_){
+        phase = phase_;
+        init();
+    };
+    PlaceHolderDataLayer(JSON* json){
+        SetOrDie(json, name)
+        SetValue(json, phase,       Testing)
+        SetOrDie(json, dim)
+        init();
+    };
+    ~PlaceHolderDataLayer(){
+    };
+    size_t Malloc(Phase phase_){
+        if (phase == Training && phase_==Testing) return 0;
+        
+        if (!in.empty()){   std::cout<<"PlaceHolderDataLayer shouldn't have any in's"<<std::endl; FatalError(__LINE__); }
+        if (out.empty()){   std::cout<<"PlaceHolderDataLayer should have some out's"<<std::endl; FatalError(__LINE__); }
+
+        size_t memoryBytes = 0;
+        std::cout<< (train_me? "* " : "  ");
+        std::cout<<name<<std::endl;
+
+        out[0]->need_diff = false;
+        out[0]->receptive_field.resize(dim.size()-2);  fill_n(out[0]->receptive_field.begin(), dim.size()-2,1);
+        out[0]->receptive_gap.resize(dim.size()-2);    fill_n(out[0]->receptive_gap.begin(),   dim.size()-2,1);
+        out[0]->receptive_offset.resize(dim.size()-2); fill_n(out[0]->receptive_offset.begin(),dim.size()-2,0);
+        memoryBytes += out[0]->Malloc(dim);
+
+        return memoryBytes;
+    }
+    void shuffle(){};
+    void forward(Phase phase_){};
+};
 
 template <class T>
 class DiskDataLayer : public DataLayer {
@@ -6923,6 +6959,7 @@ public:
             else if (0==type.compare("ROI"))                    pLayer = new ROILayer(p);
             else if (0==type.compare("ROIPooling"))             pLayer = new ROIPoolingLayer(p);
             else if (0==type.compare("Tensor"))                 pLayer = new TensorLayer(p);
+            else if (0==type.compare("PlaceHolderData"))        pLayer = new PlaceHolderDataLayer(p);
             else if (0==type.compare("LSTM"))                   pLayer = new LSTMLayer(p);
             else if (0==type.compare("SequenceGeneration"))    {pLayer = new SequenceGenerationLayer(p); sequence_layers.push_back((SequenceGenerationLayer*)pLayer);   }
             else if (0==type.compare("BatchNormalization"))     pLayer = new BatchNormalizationLayer(p);
