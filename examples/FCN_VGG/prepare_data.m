@@ -1,4 +1,4 @@
-addpath ../../marvin/tools/tensorIO_matlab
+addpath ../../tools/tensorIO_matlab
 
 
 %% prepare training data
