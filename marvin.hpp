@@ -97,7 +97,7 @@ enum LRPolicy { LR_fixed, LR_step, LR_exp, LR_inv, LR_multistep, LR_poly, LR_sig
 enum SolverAlgorithm { SGD, AdaDelta, AdaGrad, Adam, NAG, RMSprop};
 enum Regularizer { L2, L1 };
 enum LRN { CrossChannel, DivisiveNormalization };
-enum ElementWiseOp { ElementWise_EQL, ElementWise_MUL, ElementWise_SUM, ElementWise_MAX };
+enum ElementWiseOp { ElementWise_EQL, ElementWise_MUL, ElementWise_SUM, ElementWise_MIN, ElementWise_MAX };
 
 
 ComputeT anyval;
@@ -472,6 +472,7 @@ public:
         else if (0 == this->member[name]->returnString().compare("ElementWise_EQL"))        variable = ElementWise_EQL;
         else if (0 == this->member[name]->returnString().compare("ElementWise_MUL"))        variable = ElementWise_MUL;
         else if (0 == this->member[name]->returnString().compare("ElementWise_SUM"))        variable = ElementWise_SUM;
+        else if (0 == this->member[name]->returnString().compare("ElementWise_MIN"))        variable = ElementWise_MIN;
         else if (0 == this->member[name]->returnString().compare("ElementWise_MAX"))        variable = ElementWise_MAX;
         else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
     };
@@ -3213,6 +3214,43 @@ public:
 };
 
 
+class ConstantLayer: public DataLayer {
+    std::vector<ComputeT> data;
+public:
+    ConstantLayer(std::string name_): DataLayer(name_){
+        train_me = false;
+    };
+    ConstantLayer(JSON* json){
+        SetOrDie(json, name)
+        SetValue(json, phase,       TrainingTesting)
+        SetOrDie(json, data)
+        train_me = false;
+    };
+    ~ConstantLayer(){ };
+    int numofitems(){ return 1; };
+    void shuffle(){};
+    void forward(Phase phase_){ ++epoch; };
+    size_t Malloc(Phase phase_){
+        std::cout<< (train_me? "* " : "  ");
+        std::cout<<name<<std::endl;
+        if (!in.empty()){   std::cout<<"ConstantLayer shouldn't have any in's"<<std::endl; FatalError(__LINE__); }
+        if (out.size()!=1){   std::cout<<"ConstantLayer should have one out"<<std::endl; FatalError(__LINE__); }
+        size_t memoryBytes = 0;
+        std::vector<int> dim;
+        dim.push_back(data.size());
+        dim.push_back(1);
+        dim.push_back(1);
+        out[0]->need_diff = false;
+        memoryBytes += out[0]->Malloc(dim);
+        StorageT* dataStorageT = new StorageT[data.size()];
+        for (size_t i=0; i<data.size(); ++i) dataStorageT[i] = CPUCompute2StorageT(data[i]); 
+        checkCUDA(__LINE__, cudaMemcpy(out[0]->dataGPU, dataStorageT, data.size() * sizeofStorageT, cudaMemcpyHostToDevice) );
+        delete [] dataStorageT;
+        return memoryBytes;
+    };
+};
+
+
 class TensorLayer: public DataLayer {
     StorageT* tensorGPU;
 public:
@@ -5289,10 +5327,6 @@ public:
         for (int i=0;i<out.size();++i){
             out[i]->need_diff = in[i*2]->need_diff;
 
-            if (! (in[i*2+1]->dim[0] == in[i*2]->dim[0] && sizeofitem(in[i*2+1]->dim) == shape.size())){
-                std::cout<<std::endl<<"ROILayer in["<<i*2+1<<"]->dim is wrong"<<std::endl; FatalError(__LINE__);
-            }
-
             std::vector<int> dim;
             dim.push_back(in[i*2]->dim[0]);
 
@@ -5525,6 +5559,8 @@ public:
                     }
                 }
             break;
+            case ElementWise_MIN: std::cout<<"Not implemented yet"<<std::endl; FatalError(__LINE__);
+            break;
             case ElementWise_MAX: std::cout<<"Not implemented yet"<<std::endl; FatalError(__LINE__);
             break;
         };
@@ -5547,6 +5583,8 @@ public:
                         CoeffElementWiseSumAccumulate<<<CUDA_GET_BLOCKS(N),CUDA_NUM_THREADS>>>(CUDA_GET_LOOPS(N), N, coeff[ii], coeff_data, ii * items, dim, out[j]->diffGPU, in[i]->diffGPU);
                     }
                 }
+            break;
+            case ElementWise_MIN: std::cout<<"Not implemented yet"<<std::endl; FatalError(__LINE__);
             break;
             case ElementWise_MAX: std::cout<<"Not implemented yet"<<std::endl; FatalError(__LINE__);
             break;
@@ -6942,6 +6980,7 @@ public:
             else if (0==type.compare("ROI"))                    pLayer = new ROILayer(p);
             else if (0==type.compare("ROIPooling"))             pLayer = new ROIPoolingLayer(p);
             else if (0==type.compare("Tensor"))                 pLayer = new TensorLayer(p);
+            else if (0==type.compare("Constant"))               pLayer = new ConstantLayer(p);
             else if (0==type.compare("PlaceHolderData"))        pLayer = new PlaceHolderDataLayer(p);
             else if (0==type.compare("LSTM"))                   pLayer = new LSTMLayer(p);
             else if (0==type.compare("SequenceGeneration"))    {pLayer = new SequenceGenerationLayer(p); sequence_layers.push_back((SequenceGenerationLayer*)pLayer);   }
