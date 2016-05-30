@@ -9,5 +9,5 @@ elif uname | grep -q Linux; then
 fi
 
 
-./marvin train examples/mnist/lenet.json
+./marvin train examples/FCN_VGG/FCN32s.json examples/FCN_VGG/vgg16_imagenet_half.marvin
 

@@ -8,6 +8,6 @@ elif uname | grep -q Linux; then
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cudnn/v5/lib64
 fi
 
+./marvin test examples/FCN_VGG/FCN32s.json examples/FCN_VGG/FCN32s_snapshot_500.marvin prob examples/FCN_VGG/prob.tensor
 
-./marvin train examples/mnist/lenet.json
 
