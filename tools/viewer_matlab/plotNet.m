@@ -24,7 +24,7 @@ for i =1:length(net.layers)
 end
 nameofResponse = unique(nameofResponse,'stable');
 if length(nameofLayer)>length(unique(nameofLayer,'stable'))
-   printf('error : layer name not unique\n');
+   fprintf('error : layer name not unique\n');
 end
 numofNode = length(nameofLayer)+length(nameofResponse);
 names = [nameofLayer,nameofResponse];
