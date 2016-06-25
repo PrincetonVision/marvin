@@ -131,14 +131,14 @@
 		{
 			"in": ["fc1"],
 			"type": "Activation",
-			"name": "relu1",
+			"name": "fc1_relu",
 			"mode": "ReLU",
 			"out": ["fc1"]
 		},
 		{
 			"in": ["fc1"],
 			"type": "Dropout",
-			"name": "drop1",
+			"name": "fc1_drop",
 			"dropout_ratio": 0.5,
 			"out": ["fc1"]
 		},
@@ -169,8 +169,8 @@
 			"type": "Loss",
 			"name": "loss",
 			"mode": "MultinomialLogistic_StableSoftmax",
-			"loss_weight": 1.0
-			"stable_gradient": true,
+			"loss_weight": 1.0,
+			"stable_gradient": true
 		}
 	]
 }
