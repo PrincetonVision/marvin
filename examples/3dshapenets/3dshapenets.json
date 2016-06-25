@@ -1,0 +1,176 @@
+{
+	"train":
+		{
+			"path": "examples/3dshapenets/3dshapenets",
+			"solver": "SGD",
+			"regularizer": "L2",
+			"momentum": 0.9,
+			"weight_decay": 0.0005,
+			"base_lr": 0.001,
+			"lr_policy": "LR_step",
+			"lr_gamma": 0.1,
+			"lr_stepsize": 40000,
+			"lr_power": 0.75,
+			"max_iter": 1000000,
+			"snapshot_iter": 5000,
+			"display_iter": 20,
+			"test_iter": 32,
+			"test_interval": 100,
+        "GPU":[
+            3
+        ],
+        "debug_mode":false
+		},
+    "test":{
+        "GPU":0,
+        "debug_mode":false
+    },
+	"layers":[
+		{
+			"type": "MemoryData",
+			"name": "dataTrain",
+			"phase": "Training",
+			"file_data": ["examples/3dshapenets/modelnet40_r_12_v_30_train_images.tensor", "examples/3dshapenets/modelnet40_r_12_v_30_train_labels.tensor"],
+			"batch_size": 32,
+			"scale": 2,
+			"mean": 1,
+			"out": ["data","label"]
+		},
+		{
+			"type": "MemoryData",
+			"name": "dataTest",
+			"phase": "Testing",
+			"file_data": ["examples/3dshapenets/modelnet40_r_12_v_30_test_images.tensor", "examples/3dshapenets/modelnet40_r_12_v_30_test_labels.tensor"],
+			"batch_size": 32,
+			"out": ["data","label"],
+			"scale": 2,
+			"mean": 1
+		},
+		{
+			"in": ["data"],
+			"type": "Convolution",
+			"name": "conv1",
+			"num_output": 32,
+			"window": [5,5,5],
+			"padding": [1,1,1],
+			"stride": [2,2,2],
+			"upscale": [1,1,1],
+			"weight_lr_mult": 1.0,
+			"weight_decay_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 0.1,
+			"bias_lr_mult": 2.0,
+			"bias_decay_mult": 0.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv1"]
+		},
+		{
+			"in": ["conv1"],
+			"type": "Activation",
+			"name": "relu1",
+			"mode": "ReLU",
+			"out": ["conv1"]
+		},
+		{
+			"in": ["conv1"],
+			"type": "Convolution",
+			"name": "conv2",
+			"num_output": 32,
+			"window": [3,3,3],
+			"stride": [1,1,1],
+			"padding": [0,0,0],
+			"weight_lr_mult": 1.0,
+			"weight_decay_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 0.1,
+			"bias_lr_mult": 2.0,
+			"bias_decay_mult": 0.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 0.0,
+			"out": ["conv2"]
+		},
+		{
+			"in": ["conv2"],
+			"type": "Activation",
+			"name": "relu2",
+			"mode": "ReLU",
+			"out": ["conv2"]
+		},
+		{
+			"in": ["conv2"],
+			"type": "Dropout",
+			"name": "drop1",
+			"dropout_ratio": 0.5,
+			"out": ["conv2"]
+		},
+		{
+			"in": ["conv2"],
+			"type": "Pooling",
+			"name": "pool2",
+			"mode": "max",
+			"window": [2,2,2],
+			"stride": [2,2,2],
+			"out": ["pool2"]
+		},
+		{
+			"in": ["pool2"],
+			"type": "InnerProduct",
+			"name": "fc1",
+			"num_output": 128,
+			"weight_lr_mult": 1.0,
+			"weight_decay_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 0.05,
+			"bias_lr_mult": 2.0,
+			"bias_decay_mult": 0.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 1.0,
+			"out": ["fc1"]
+		},
+		{
+			"in": ["fc1"],
+			"type": "Activation",
+			"name": "relu1",
+			"mode": "ReLU",
+			"out": ["fc1"]
+		},
+		{
+			"in": ["fc1"],
+			"type": "Dropout",
+			"name": "drop1",
+			"dropout_ratio": 0.5,
+			"out": ["fc1"]
+		},
+		{
+			"in": ["fc1"],
+			"type": "InnerProduct",
+			"name": "fc2",
+			"num_output": 40,
+			"weight_lr_mult": 1.0,
+			"weight_decay_mult": 1.0,
+			"weight_filler": "Gaussian",
+			"weight_filler_param": 0.05,
+			"bias_lr_mult": 2.0,
+			"bias_decay_mult": 0.0,
+			"bias_filler": "Constant",
+			"bias_filler_param": 1.0,
+			"out": ["fc2"]
+		},
+		{
+			"in": ["fc2"],
+			"type": "Softmax",
+			"stable_gradient": true,
+			"name": "prob",
+			"out": ["prob"]
+		},
+		{
+			"in": ["prob","label"],
+			"type": "Loss",
+			"name": "loss",
+			"mode": "MultinomialLogistic_StableSoftmax",
+			"loss_weight": 1.0
+			"stable_gradient": true,
+		}
+	]
+}
