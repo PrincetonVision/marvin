@@ -6795,7 +6795,7 @@ public:
                     bnScaleBiasMeanVarDesc,
                     weight_dataGPU,
                     bias_dataGPU,
-                    1 / (1 + numForwardTrainingPasses),
+                    1. / (1 + numForwardTrainingPasses),
                     resultRunningMean + weight_index,
                     resultRunningInvVariance + bias_index,
                     epsilon,
