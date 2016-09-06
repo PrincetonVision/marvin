@@ -83,6 +83,13 @@
 #include <cudnn.h>
 #include <sys/time.h>
 
+#define USE_OPENCV 1
+
+#if USE_OPENCV
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#endif
+
 namespace marvin {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3536,6 +3543,192 @@ class MemoryDataLayer : public DataLayer {
     };
 };
 
+
+#if USE_OPENCV
+class ImageDataLayer : public DataLayer {
+    StorageT* dataCPU;
+    StorageT* dataGPU;
+    StorageT* labelCPU;
+    StorageT* labelGPU;
+
+    std::vector<size_t> ordering;
+    std::vector<std::string> img_fname;
+    std::vector<StorageT> img_label;
+
+    std::future<void> lock;
+    int epoch_prefetch;
+
+public:    
+    std::vector<int> size_output;
+    std::string file_list;
+    int batch_size;
+    ComputeT mean_value;
+
+    ImageDataLayer(JSON* json){
+        SetOrDie(json, name)
+        SetValue(json, phase,       Training)
+        SetOrDie(json, size_output)
+        SetOrDie(json, file_list)
+        SetOrDie(json, mean_value)
+        SetValue(json, batch_size,  64)
+        SetValue(json, random,      true)
+        init();
+    };
+
+    void shuffle(){
+        if (!random) return;
+        if (phase!=Testing){
+            ordering = randperm(img_label.size(), rng);
+        }
+    };     
+
+    int numofitems(){
+        return img_label.size();
+    };
+    void init(){
+        train_me = false;
+        std::cout<<"ImageDataLayer "<<name<<" loading data: ";
+
+        std::ifstream fin(file_list);
+        while (!fin.eof()){
+            ComputeT label;
+            std::string fname;
+            fin>>label;
+            if (fin.eof()) break;
+            fin>>fname;
+            img_label.push_back(CPUCompute2StorageT(label));
+            img_fname.push_back(fname);
+        };
+        fin.close();
+
+        std::cout<<"# of images = "<<img_label.size()<<std::endl;
+
+        if (phase!=Testing){
+            shuffle();
+        }else{
+            ordering.resize(numofitems());
+            for (int i=0;i<numofitems();++i) ordering[i]=i;
+        }
+    }
+
+    ImageDataLayer(std::string name_, Phase phase_, int batch_size_): DataLayer(name_), batch_size(batch_size_){
+        phase = phase_;
+
+        dataCPU  =NULL;
+        labelCPU =NULL;
+        dataGPU  =NULL;
+        labelGPU =NULL;
+
+        init();
+    };
+
+    ~ImageDataLayer(){
+        if (dataCPU!=NULL)  delete [] dataCPU;
+        if (labelCPU!=NULL) delete [] labelCPU;
+        if (dataGPU!=NULL)  checkCUDA(__LINE__, cudaFree(dataGPU));
+        if (labelGPU!=NULL) checkCUDA(__LINE__, cudaFree(labelGPU));
+    };
+
+    void prefetch(){
+
+        size_t perImageSize = 3*size_output[0]*size_output[1];
+        cv::Size resize_size(size_output[0],size_output[1]);
+
+        for (size_t i=0;i<batch_size;++i){
+            // choose image
+            int image_i = ordering[counter];
+
+            // read image
+            cv::Mat image_RGB = cv::imread(img_fname[image_i],CV_LOAD_IMAGE_UNCHANGED);
+            cv::Mat image_RGB_resize;
+
+            // resize image
+            cv::resize(image_RGB,image_RGB_resize,resize_size);
+
+            // convert image and subtract mean
+            StorageT* pImage = dataCPU+i*perImageSize;
+            StorageT* pImageEnd   = pImage+perImageSize;
+            uchar* pPixel = image_RGB_resize.data;
+            while(pImage!=pImageEnd){
+                *pImage = CPUCompute2StorageT(ComputeT(*pPixel)- mean_value);
+                ++pImage; ++pPixel;
+            }
+
+            // copy label
+            labelCPU[i] = img_label[image_i];
+            
+            counter++;
+            if (counter>= ordering.size()){
+                if (phase!=Testing) shuffle();
+                counter = 0;
+                ++epoch_prefetch;
+            }
+        }
+
+        // copy from CPU to GPU
+        checkCUDA(__LINE__, cudaMemcpy(dataGPU, dataCPU, batch_size*perImageSize*sizeofStorageT, cudaMemcpyHostToDevice) );
+        checkCUDA(__LINE__, cudaMemcpy(labelGPU, labelCPU, batch_size*sizeofStorageT, cudaMemcpyHostToDevice) );
+    };
+
+
+    size_t Malloc(Phase phase_){
+        if (phase == Training && phase_==Testing) return 0;
+        
+        if (!in.empty()){   std::cout<<"ImageDataLayer shouldn't have any in's"<<std::endl; FatalError(__LINE__); }
+        if (out.empty()){   std::cout<<"ImageDataLayer should have some out's"<<std::endl; FatalError(__LINE__); }
+        if (out.size()!=2){  std::cout<<"ImageDataLayer: # of out's should be 2"<<std::endl; FatalError(__LINE__); }
+
+        size_t memoryBytes = 0;
+        std::cout<< (train_me? "* " : "  ");
+        std::cout<<name<<std::endl;
+
+        dataCPU  = new StorageT[batch_size*3*size_output[0]*size_output[1]];
+        labelCPU = new StorageT[batch_size];
+        checkCUDA(__LINE__, cudaMalloc(&dataGPU, batch_size*3*size_output[0]*size_output[1]*sizeofStorageT) );
+        checkCUDA(__LINE__, cudaMalloc(&labelGPU, batch_size*sizeofStorageT) );
+
+        out[0]->need_diff = false;
+        std::vector<int> data_dim;
+        data_dim.push_back(batch_size);
+        data_dim.push_back(3);
+        data_dim.push_back(size_output[0]);
+        data_dim.push_back(size_output[1]);
+        out[0]->receptive_field.resize(data_dim.size()-2);  fill_n(out[0]->receptive_field.begin(), data_dim.size()-2,1);
+        out[0]->receptive_gap.resize(data_dim.size()-2);    fill_n(out[0]->receptive_gap.begin(),   data_dim.size()-2,1);
+        out[0]->receptive_offset.resize(data_dim.size()-2); fill_n(out[0]->receptive_offset.begin(),data_dim.size()-2,0);
+        memoryBytes += out[0]->Malloc(data_dim);
+
+        out[1]->need_diff = false;
+        std::vector<int> label_dim;
+        label_dim.push_back(batch_size);
+        label_dim.push_back(1);
+        label_dim.push_back(1);
+        label_dim.push_back(1);
+        out[1]->receptive_field.resize(label_dim.size()-2);  fill_n(out[1]->receptive_field.begin(), label_dim.size()-2,1);
+        out[1]->receptive_gap.resize(label_dim.size()-2);    fill_n(out[1]->receptive_gap.begin(),   label_dim.size()-2,1);
+        out[1]->receptive_offset.resize(label_dim.size()-2); fill_n(out[1]->receptive_offset.begin(),label_dim.size()-2,0);
+        memoryBytes += out[1]->Malloc(label_dim);
+
+        //lock = std::async(std::launch::async,&ImageDataLayer::prefetch,this);
+        prefetch();
+
+        return memoryBytes;
+    };
+
+
+    void forward(Phase phase_){
+        //lock.wait();
+        epoch = epoch_prefetch;
+
+        std::swap(out[0]->dataGPU,dataGPU);
+        std::swap(out[1]->dataGPU,labelGPU);
+        //lock = std::async(std::launch::async,&ImageDataLayer::prefetch,this);
+        prefetch();
+    };
+};
+#endif
+
+
 class PlaceHolderDataLayer : public DataLayer {
     public:
     std::vector<int> dim;
@@ -6966,6 +7159,9 @@ public:
                 else if (fpTypeid==typeID(typeid(char)))        pLayer = new DiskDataLayer<char>(p);
                 else if (fpTypeid==typeID(typeid(bool)))        pLayer = new DiskDataLayer<bool>(p);
             }
+#if USE_OPENCV
+            else if (0==type.compare("ImageData"))              pLayer = new ImageDataLayer(p);
+#endif            
             else if (0==type.compare("ElementWise"))            pLayer = new ElementWiseLayer(p);
             else if (0==type.compare("Concat"))                 pLayer = new ConcatLayer(p);
             else if (0==type.compare("Convolution"))            pLayer = new ConvolutionLayer(p);
