@@ -3709,21 +3709,19 @@ public:
         out[1]->receptive_offset.resize(label_dim.size()-2); fill_n(out[1]->receptive_offset.begin(),label_dim.size()-2,0);
         memoryBytes += out[1]->Malloc(label_dim);
 
-        //lock = std::async(std::launch::async,&ImageDataLayer::prefetch,this);
-        prefetch();
+        lock = std::async(std::launch::async,&ImageDataLayer::prefetch,this);
 
         return memoryBytes;
     };
 
 
     void forward(Phase phase_){
-        //lock.wait();
+        lock.wait();
         epoch = epoch_prefetch;
 
         std::swap(out[0]->dataGPU,dataGPU);
         std::swap(out[1]->dataGPU,labelGPU);
-        //lock = std::async(std::launch::async,&ImageDataLayer::prefetch,this);
-        prefetch();
+        lock = std::async(std::launch::async,&ImageDataLayer::prefetch,this);
     };
 };
 #endif
