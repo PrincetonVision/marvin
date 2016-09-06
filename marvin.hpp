@@ -83,7 +83,7 @@
 #include <cudnn.h>
 #include <sys/time.h>
 
-#define USE_OPENCV 1
+#define USE_OPENCV 0
 
 #if USE_OPENCV
 #include "opencv2/highgui/highgui.hpp"
