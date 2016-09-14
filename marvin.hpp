@@ -3730,6 +3730,8 @@ public:
 class PlaceHolderDataLayer : public DataLayer {
     public:
     std::vector<int> dim;
+    std::string file_mean;
+    StorageT* meanGPU;
 
     int numofitems(){
         return 1;
@@ -3747,6 +3749,7 @@ class PlaceHolderDataLayer : public DataLayer {
         SetOrDie(json, name)
         SetValue(json, phase,       Testing)
         SetOrDie(json, dim)
+        SetValue(json, file_mean,   "")
         init();
     };
     ~PlaceHolderDataLayer(){
@@ -3766,6 +3769,18 @@ class PlaceHolderDataLayer : public DataLayer {
         out[0]->receptive_gap.resize(dim.size()-2);    fill_n(out[0]->receptive_gap.begin(),   dim.size()-2,1);
         out[0]->receptive_offset.resize(dim.size()-2); fill_n(out[0]->receptive_offset.begin(),dim.size()-2,0);
         memoryBytes += out[0]->Malloc(dim);
+
+        // mean
+        if(file_mean.empty()){
+            meanGPU = NULL;
+        }else{
+            Tensor<StorageT>* meanCPU = new Tensor<StorageT>(file_mean);
+            meanCPU->print(veci(0));
+            checkCUDA(__LINE__, cudaMalloc(&meanGPU, meanCPU->numBytes()) );
+            memoryBytes += meanCPU->numBytes();
+            meanCPU->writeGPU(meanGPU);
+            delete meanCPU;
+        }
 
         return memoryBytes;
     }

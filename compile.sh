@@ -10,4 +10,7 @@ elif uname | grep -q Linux; then
   CUDNN_LIB_DIR=/usr/local/cudnn/v5/lib64
 fi
 
+# if use opencv, add this into the command line
+# `pkg-config --cflags --libs opencv`
+
 nvcc -std=c++11 -O3 -o marvin marvin.cu -I/usr/local/cuda/include -I/usr/local/cudnn/v5/include -L$CUDA_LIB_DIR -L$CUDNN_LIB_DIR -lcudart -lcublas -lcudnn -lcurand -D_MWAITXINTRIN_H_INCLUDED

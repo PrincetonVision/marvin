@@ -4,3 +4,4 @@
 *.marvin
 *.tensor
 /build
+examples/webcam/webcam
