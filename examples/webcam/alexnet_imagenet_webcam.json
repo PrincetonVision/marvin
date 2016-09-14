@@ -4,7 +4,7 @@
         },
     "test":
         {
-            "debug_mode": true,
+            "debug_mode": false,
             "GPU": 0
         },
     "layers":[

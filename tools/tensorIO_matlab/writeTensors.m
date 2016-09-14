@@ -75,10 +75,10 @@ for i=1:length(tensors)
     end
 
     
-    dim = dim(end:-1:1);
     while tensors(i).dim > numel(dim)
         dim(end+1) = 1;
     end    
+    dim = dim(end:-1:1);
     
     
     fwrite(fin, int32(length(dim)), 'int32');
