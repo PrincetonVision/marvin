@@ -52,8 +52,8 @@ int main(int argc, char **argv){
 
     marvin::PlaceHolderDataLayer* pDataLayer = (marvin::PlaceHolderDataLayer*)net.layers[0];
 
-    int width_network = pDataLayer->dim[2];
-    int height_network = pDataLayer->dim[3];
+    int height_network = pDataLayer->dim[2];
+    int width_network = pDataLayer->dim[3];
     int numel_network = width_network*height_network*3;
 
     uint8_t* imageGPU;
