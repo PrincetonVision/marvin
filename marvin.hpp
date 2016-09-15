@@ -1312,6 +1312,21 @@ __global__ void LossGrad_Contrastive(
 }
 
 
+__global__ void Kernel_OpenCV_BGR_image_to_Marvin(size_t CUDA_NUM_LOOPS, size_t N, size_t channels, size_t height, size_t width, const uint8_t* pIn, uint8_t* pOut) {
+    const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x)); if (idxBase >= N) return;
+    for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
+        int c = idx / (height*width);
+        int h = (idx % (height*width)) / width ;
+        int w = idx % width;
+        pOut[idx] = pIn[ ( h * width + w ) * 3 + (2-c)];
+    }
+}
+
+void OpenCV_BGR_image_to_Marvin(size_t channels, size_t height, size_t width, const uint8_t* pIn, uint8_t* pOut){
+    size_t N = channels * height * width;
+    Kernel_OpenCV_BGR_image_to_Marvin<<<CUDA_GET_BLOCKS(N), CUDA_NUM_THREADS >>>(CUDA_GET_LOOPS(N), N, channels, height, width, pIn, pOut);
+}
+
 __global__ void Kernel_convert_to_StorageT_subtract(size_t CUDA_NUM_LOOPS, size_t N, size_t sizeofitem, const half* pIn, const StorageT* pMean, StorageT* pOut) {
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x)); if (idxBase >= N) return;
     if (pMean==NULL) for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ) pOut[idx] = GPUCompute2StorageT( ComputeT(__half2float(pIn[idx])) );

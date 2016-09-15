@@ -56,8 +56,8 @@ int main(int argc, char **argv){
     int width_network = pDataLayer->dim[3];
     int numel_network = width_network*height_network*3;
 
-    uint8_t* imageGPU;
-    marvin::checkCUDA(__LINE__, cudaMalloc(&imageGPU, width_network*height_network*3));
+    uint8_t* imageGPU_OCV;  marvin::checkCUDA(__LINE__, cudaMalloc(&imageGPU_OCV, width_network*height_network*3));
+    uint8_t* imageGPU;      marvin::checkCUDA(__LINE__, cudaMalloc(&imageGPU, width_network*height_network*3));
 
     std::cout<<"====================================================================================================================================="<<std::endl;
 
@@ -71,7 +71,10 @@ int main(int argc, char **argv){
         cv::resize(image_original, image_resize, cv::Size(height_network,width_network));
 
         // copy the image from CPU to GPU
-        cudaMemcpy(imageGPU, image_resize.data, height_network*width_network*3*sizeof(uint8_t), cudaMemcpyHostToDevice);
+        cudaMemcpy(imageGPU_OCV, image_resize.data, height_network*width_network*3*sizeof(uint8_t), cudaMemcpyHostToDevice);
+
+        // convert the color image from OpenCV format (BGR with channel first) to Marvin format (CHW with RGB)
+        marvin::OpenCV_BGR_image_to_Marvin(3, width_network, width_network, imageGPU_OCV, imageGPU);
 
         // convert image from uint8_t to StorageT on GPU
         marvin::Kernel_convert_to_StorageT_subtract<<<marvin::CUDA_GET_BLOCKS(numel_network), CUDA_NUM_THREADS >>>(marvin::CUDA_GET_LOOPS(numel_network), numel_network, numel_network, imageGPU, pDataLayer->meanGPU, rData->dataGPU);
@@ -102,6 +105,7 @@ int main(int argc, char **argv){
         if (key=='q' || key=='Q' || key==27) break;
     }
 
+    marvin::checkCUDA(__LINE__, cudaFree(imageGPU_OCV));
     marvin::checkCUDA(__LINE__, cudaFree(imageGPU));
 
     delete cpuResult;
