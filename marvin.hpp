@@ -1315,10 +1315,10 @@ __global__ void LossGrad_Contrastive(
 __global__ void Kernel_OpenCV_BGR_image_to_Marvin(size_t CUDA_NUM_LOOPS, size_t N, size_t channels, size_t height, size_t width, const uint8_t* pIn, uint8_t* pOut) {
     const size_t idxBase = size_t(CUDA_NUM_LOOPS) * (size_t(CUDA_NUM_THREADS) * size_t(blockIdx.x) + size_t(threadIdx.x)); if (idxBase >= N) return;
     for (size_t idx = idxBase; idx < min(N,idxBase+CUDA_NUM_LOOPS); ++idx ){
-        int c = idx / (height*width);
-        int h = (idx % (height*width)) / width ;
-        int w = idx % width;
-        pOut[idx] = pIn[ ( h * width + w ) * 3 + (2-c)];
+        size_t chn = 2 - (idx % 3);
+        size_t col = (idx/3)%width;
+        size_t row = (idx/(3*width));
+        pOut[(chn*height+row)*width+col] = pIn[idx];
     }
 }
 

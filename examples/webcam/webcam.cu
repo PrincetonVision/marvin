@@ -74,7 +74,7 @@ int main(int argc, char **argv){
         cudaMemcpy(imageGPU_OCV, image_resize.data, height_network*width_network*3*sizeof(uint8_t), cudaMemcpyHostToDevice);
 
         // convert the color image from OpenCV format (BGR with channel first) to Marvin format (CHW with RGB)
-        marvin::OpenCV_BGR_image_to_Marvin(3, width_network, width_network, imageGPU_OCV, imageGPU);
+        marvin::OpenCV_BGR_image_to_Marvin(3, height_network, width_network, imageGPU_OCV, imageGPU);
 
         // convert image from uint8_t to StorageT on GPU
         marvin::Kernel_convert_to_StorageT_subtract<<<marvin::CUDA_GET_BLOCKS(numel_network), CUDA_NUM_THREADS >>>(marvin::CUDA_GET_LOOPS(numel_network), numel_network, numel_network, imageGPU, pDataLayer->meanGPU, rData->dataGPU);
