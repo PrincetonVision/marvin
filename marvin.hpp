@@ -2238,7 +2238,11 @@ cublasStatus_t Hasum(cublasHandle_t handle, int n, const half *x, int incx, floa
 }
 
 cublasStatus_t Hgemm(cublasHandle_t handle, cublasOperation_t transa, cublasOperation_t transb, int m, int n, int k, const float *alpha, const half *A, int lda, const half *B, int ldb, const float *beta,  half *C, int ldc){
+#if CUDA_VERSION >= 8000
+    return cublasSgemmEx(handle, transa, transb, m, n, k, alpha, A, CUDA_R_16F, lda, B, CUDA_R_16F, ldb, beta, C, CUDA_R_16F, ldc);
+#else
     return cublasSgemmEx(handle, transa, transb, m, n, k, alpha, A, CUBLAS_DATA_HALF, lda, B, CUBLAS_DATA_HALF, ldb, beta, C, CUBLAS_DATA_HALF, ldc);
+#endif
 }
 
 
