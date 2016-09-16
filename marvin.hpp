@@ -2553,6 +2553,8 @@ public:
 
     Tensor(std::vector<int> dim_): dim(dim_){ CPUmem = new T [numel()]; };
 
+    Tensor(std::vector<int> dim_, T* ptr_data): dim(dim_){ CPUmem = ptr_data; };
+
     Tensor(std::vector<int> dim_, T initValue): dim(dim_){
         int n = numel();
         CPUmem = new T [n];

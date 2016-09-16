@@ -21,7 +21,6 @@ int main(int argc, char **argv){
     // where the data is
     marvin::Response* rData = net.responses[0];
     marvin::Response* rResult = net.responses[net.responses.size()-1];
-    marvin::Tensor<StorageT>* cpuResult = new marvin::Tensor<StorageT>(rResult->dim);
 
     // image net list
     std::vector<std::string> objectCategories;
@@ -47,8 +46,7 @@ int main(int argc, char **argv){
         std::cerr << "Failed to open the video device, video file or image sequence!\n" << std::endl;
         return 1;
     }
-    cv::Mat image_original;
-    cv::Mat image_resize;
+
 
     marvin::PlaceHolderDataLayer* pDataLayer = (marvin::PlaceHolderDataLayer*)net.layers[0];
 
@@ -56,34 +54,71 @@ int main(int argc, char **argv){
     int width_network = pDataLayer->dim[3];
     int numel_network = width_network*height_network*3;
 
-    uint8_t* imageGPU_OCV;  marvin::checkCUDA(__LINE__, cudaMalloc(&imageGPU_OCV, width_network*height_network*3));
+    //uint8_t* imageGPU_OCV;  marvin::checkCUDA(__LINE__, cudaMalloc(&imageGPU_OCV, width_network*height_network*3));
+
+    uint8_t* image_resize_memCPU;
+	marvin::checkCUDA(__LINE__, cudaHostAlloc( (void**)&image_resize_memCPU, width_network*height_network*3*sizeof(uint8_t), cudaHostAllocWriteCombined | cudaHostAllocMapped ));
+
+	uint8_t* image_resize_memGPU;	cudaHostGetDevicePointer( &image_resize_memGPU, image_resize_memCPU, 0 );
+
+    cv::Mat image_original;
+    cv::Mat image_resize(height_network,width_network,CV_8UC3,image_resize_memCPU);
+
     uint8_t* imageGPU;      marvin::checkCUDA(__LINE__, cudaMalloc(&imageGPU, width_network*height_network*3));
+
+
+    // allocate CPU for the host
+    StorageT* rResult_CPU; 
+	marvin::checkCUDA(__LINE__, cudaHostAlloc( (void**)&rResult_CPU, rResult->numBytes(), cudaHostAllocWriteCombined | cudaHostAllocMapped ));
+    marvin::Tensor<StorageT>* cpuResult = new marvin::Tensor<StorageT>(rResult->dim, rResult_CPU);
+
+    // replace the original GPU memory
+    marvin::checkCUDA(__LINE__, cudaFree(rResult->dataGPU));
+	cudaHostGetDevicePointer( &(rResult->dataGPU), rResult_CPU, 0 );
 
     std::cout<<"====================================================================================================================================="<<std::endl;
 
     // while it is running
     while (true){
         // read image data, e.g. using OpenCV to get an image from webcam
+        marvin::tic();
         capture >> image_original;
+        std::cout<<"capture image: ";
+        marvin::toc();
         if (image_original.empty()) break;
 
         // resize image for the network
+        marvin::tic();
         cv::resize(image_original, image_resize, cv::Size(height_network,width_network));
+        std::cout<<"resize image: ";
+        marvin::toc();
 
         // copy the image from CPU to GPU
-        cudaMemcpy(imageGPU_OCV, image_resize.data, height_network*width_network*3*sizeof(uint8_t), cudaMemcpyHostToDevice);
+        //cudaMemcpy(imageGPU_OCV, image_resize.data, height_network*width_network*3*sizeof(uint8_t), cudaMemcpyHostToDevice);
 
         // convert the color image from OpenCV format (BGR with channel first) to Marvin format (CHW with RGB)
-        marvin::OpenCV_BGR_image_to_Marvin(3, height_network, width_network, imageGPU_OCV, imageGPU);
+        marvin::tic();
+        marvin::OpenCV_BGR_image_to_Marvin(3, height_network, width_network, image_resize_memGPU, imageGPU);
+        std::cout<<"OpenCV_BGR_image_to_Marvin: ";
+        marvin::toc();
 
         // convert image from uint8_t to StorageT on GPU
+        marvin::tic();
         marvin::Kernel_convert_to_StorageT_subtract<<<marvin::CUDA_GET_BLOCKS(numel_network), CUDA_NUM_THREADS >>>(marvin::CUDA_GET_LOOPS(numel_network), numel_network, numel_network, imageGPU, pDataLayer->meanGPU, rData->dataGPU);
+        std::cout<<"Kernel_convert_to_StorageT_subtract: ";
+        marvin::toc();
 
         // test the network
+        marvin::tic();
         net.forward();
+        std::cout<<"net.forward(): ";
+        marvin::toc();
 
         // read the result from GPU to CPU
-        cpuResult->readGPU(rResult->dataGPU);
+        //marvin::tic();
+        //cpuResult->readGPU(rResult->dataGPU);
+        //std::cout<<"cpuResult->readGPU: ";
+        //marvin::toc();
 
         // visualize the result or use the result
         imshow("Marvin webcam demo", image_resize);
@@ -105,7 +140,8 @@ int main(int argc, char **argv){
         if (key=='q' || key=='Q' || key==27) break;
     }
 
-    marvin::checkCUDA(__LINE__, cudaFree(imageGPU_OCV));
+    marvin::checkCUDA(__LINE__, cudaFree(image_resize_memGPU));
+    free(image_resize_memCPU);
     marvin::checkCUDA(__LINE__, cudaFree(imageGPU));
 
     delete cpuResult;
