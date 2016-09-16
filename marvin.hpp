@@ -592,6 +592,7 @@ public:
         else if (0 == this->member[name]->returnString().compare("fft"))                    variable = CUDNN_CONVOLUTION_FWD_ALGO_FFT;
         else if (0 == this->member[name]->returnString().compare("fft_tiling"))             variable = CUDNN_CONVOLUTION_FWD_ALGO_FFT_TILING;
         else if (0 == this->member[name]->returnString().compare("winograd"))               variable = CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD;
+        else if (0 == this->member[name]->returnString().compare("winograd_nonfused"))      variable = CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED;
         else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
     };
 
@@ -602,6 +603,7 @@ public:
         else if (0 == this->member[name]->returnString().compare("fft"))                    variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT;
         else if (0 == this->member[name]->returnString().compare("fft_tiling"))             variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT_TILING;
         else if (0 == this->member[name]->returnString().compare("winograd"))               variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD;
+        else if (0 == this->member[name]->returnString().compare("winograd_nonfused"))      variable = CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD_NONFUSED;
         else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
     };
 
@@ -611,6 +613,7 @@ public:
         else if (0 == this->member[name]->returnString().compare("1"))                      variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
         else if (0 == this->member[name]->returnString().compare("fft"))                    variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT;
         else if (0 == this->member[name]->returnString().compare("3"))                      variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_3;
+        else if (0 == this->member[name]->returnString().compare("winograd_nonfused"))      variable = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED;
         else{ std::cout<<"Unsupported "<<name<<" = "<<this->member[name]->returnString()<<std::endl; FatalError(__LINE__); }
     };
 
