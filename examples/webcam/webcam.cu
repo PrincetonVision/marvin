@@ -37,11 +37,11 @@ int main(int argc, char **argv){
     cv::VideoCapture capture; //try to open string, this will attempt to open it as a video file or image sequence
     capture.open(atoi(argv[4]));
 
-    int width_webcome = 640;
-    int height_webcome = 480;
+    int width_webcam = 640;
+    int height_webcam = 480;
 
-    capture.set(CV_CAP_PROP_FRAME_WIDTH,width_webcome);
-    capture.set(CV_CAP_PROP_FRAME_HEIGHT,height_webcome);    
+    capture.set(CV_CAP_PROP_FRAME_WIDTH,width_webcam);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT,height_webcam);    
     if (!capture.isOpened()) {
         std::cerr << "Failed to open the video device, video file or image sequence!\n" << std::endl;
         return 1;
