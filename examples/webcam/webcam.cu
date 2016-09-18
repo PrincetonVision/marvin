@@ -34,7 +34,7 @@ int main(int argc, char **argv){
 
     // initialize video data feed from webcam
 
-    cv::VideoCapture capture; //try to open string, this will attempt to open it as a video file or image sequence
+    cv::VideoCapture capture;
     capture.open(atoi(argv[4]));
 
     int width_webcam = 640;
@@ -79,7 +79,7 @@ int main(int argc, char **argv){
     std::cout<<"====================================================================================================================================="<<std::endl;
 
     // while it is running
-    while (true){
+    for(;;){
         // read image data, e.g. using OpenCV to get an image from webcam
         marvin::tic();
         capture >> image_original;

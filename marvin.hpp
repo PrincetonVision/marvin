@@ -1,7 +1,10 @@
+#ifndef MARVIN_HPP
+#define MARVIN_HPP
+
 /*
  * ----------------------------------------------------------------------------
  * Marvin: A Minimalist GPU-only N-Dimensional ConvNets Framework
- * Copyright (C) 2015 Princeton Vision Group
+ * Copyright (C) 2016 AutoX, Inc.
  * ----------------------------------------------------------------------------
  */
 
@@ -8525,3 +8528,5 @@ public:
 };
 
 }  // namespace marvin
+
+#endif
