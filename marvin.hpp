@@ -3824,7 +3824,7 @@ class MemoryDataLayer : public DataLayer {
 class ImageDataLayer : public DataLayer {
     StorageT* dataCPU;
     StorageT* dataGPU;
-    StroageT* labelCPU;
+    StorageT* labelCPU;
     StorageT* labelGPU;
 
     Tensor<StorageT>* labelTensor;
