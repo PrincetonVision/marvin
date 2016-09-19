@@ -3824,27 +3824,30 @@ class MemoryDataLayer : public DataLayer {
 class ImageDataLayer : public DataLayer {
     StorageT* dataCPU;
     StorageT* dataGPU;
-    StorageT* labelCPU;
+    StroageT* labelCPU;
     StorageT* labelGPU;
+
+    Tensor<StorageT>* labelTensor;
 
     std::vector<size_t> ordering;
     std::vector<std::string> img_fname;
-    std::vector<StorageT> img_label;
 
     std::future<void> lock;
     int epoch_prefetch;
 
-public:    
-    std::vector<int> size_output;
+public:
     std::string file_list;
+    std::string file_label;
+    std::vector<int> image_output;
     int batch_size;
     ComputeT mean_value;
 
     ImageDataLayer(JSON* json){
         SetOrDie(json, name)
         SetValue(json, phase,       Training)
-        SetOrDie(json, size_output)
+        SetOrDie(json, image_output)
         SetOrDie(json, file_list)
+        SetOrDie(json, file_label)
         SetOrDie(json, mean_value)
         SetValue(json, batch_size,  64)
         SetValue(json, random,      true)
@@ -3854,12 +3857,12 @@ public:
     void shuffle(){
         if (!random) return;
         if (phase!=Testing){
-            ordering = randperm(img_label.size(), rng);
+            ordering = randperm(img_fname.size(), rng);
         }
     };     
 
     int numofitems(){
-        return img_label.size();
+        return img_fname.size();
     };
     void init(){
         train_me = false;
@@ -3867,17 +3870,17 @@ public:
 
         std::ifstream fin(file_list);
         while (!fin.eof()){
-            ComputeT label;
             std::string fname;
-            fin>>label;
-            if (fin.eof()) break;
             fin>>fname;
-            img_label.push_back(CPUCompute2StorageT(label));
+            if (fin.eof()) break;
             img_fname.push_back(fname);
         };
         fin.close();
+        std::cout<<"# of images = "<<img_fname.size()<<std::endl;
 
-        std::cout<<"# of images = "<<img_label.size()<<std::endl;
+
+        labelTensor = new Tensor<StorageT>(file_label);
+        labelTensor->print(veci(0));
 
         if (phase!=Testing){
             shuffle();
@@ -3899,6 +3902,7 @@ public:
     };
 
     ~ImageDataLayer(){
+        if (labelTensor!=NULL) delete labelTensor;
         if (dataCPU!=NULL)  delete [] dataCPU;
         if (labelCPU!=NULL) delete [] labelCPU;
         if (dataGPU!=NULL)  checkCUDA(__LINE__, cudaFree(dataGPU));
@@ -3907,8 +3911,8 @@ public:
 
     void prefetch(){
 
-        size_t perImageSize = 3*size_output[0]*size_output[1];
-        cv::Size resize_size(size_output[0],size_output[1]);
+        size_t perImageSize = 3*image_output[0]*image_output[1];
+        cv::Size resize_size(image_output[0],image_output[1]);
 
         for (size_t i=0;i<batch_size;++i){
             // choose image
@@ -3931,7 +3935,7 @@ public:
             }
 
             // copy label
-            labelCPU[i] = img_label[image_i];
+            memcpy(labelCPU+i*labelTensor->sizeofitem(), labelTensor->CPUmem+image_i*labelTensor->sizeofitem(), labelTensor->sizeofitem()*sizeofStorageT );
             
             counter++;
             if (counter>= ordering.size()){
@@ -3943,7 +3947,7 @@ public:
 
         // copy from CPU to GPU
         checkCUDA(__LINE__, cudaMemcpy(dataGPU, dataCPU, batch_size*perImageSize*sizeofStorageT, cudaMemcpyHostToDevice) );
-        checkCUDA(__LINE__, cudaMemcpy(labelGPU, labelCPU, batch_size*sizeofStorageT, cudaMemcpyHostToDevice) );
+        checkCUDA(__LINE__, cudaMemcpy(labelGPU, labelCPU, batch_size*labelTensor->sizeofitem()*sizeofStorageT, cudaMemcpyHostToDevice) );
     };
 
 
@@ -3958,17 +3962,20 @@ public:
         std::cout<< (train_me? "* " : "  ");
         std::cout<<name<<std::endl;
 
-        dataCPU  = new StorageT[batch_size*3*size_output[0]*size_output[1]];
-        labelCPU = new StorageT[batch_size];
-        checkCUDA(__LINE__, cudaMalloc(&dataGPU, batch_size*3*size_output[0]*size_output[1]*sizeofStorageT) );
-        checkCUDA(__LINE__, cudaMalloc(&labelGPU, batch_size*sizeofStorageT) );
+        dataCPU  = new StorageT[batch_size*3*image_output[0]*image_output[1]];
+        checkCUDA(__LINE__, cudaMalloc(&dataGPU, batch_size*3*image_output[0]*image_output[1]*sizeofStorageT) );
+        memoryBytes += batch_size*3*image_output[0]*image_output[1]*sizeofStorageT;
+
+        labelCPU = new StorageT[batch_size* labelTensor->sizeofitem() ];
+        checkCUDA(__LINE__, cudaMalloc(&labelGPU, batch_size* labelTensor->sizeofitem()*sizeofStorageT) );
+        memoryBytes += batch_size* labelTensor->sizeofitem()*sizeofStorageT;
 
         out[0]->need_diff = false;
         std::vector<int> data_dim;
         data_dim.push_back(batch_size);
         data_dim.push_back(3);
-        data_dim.push_back(size_output[0]);
-        data_dim.push_back(size_output[1]);
+        data_dim.push_back(image_output[0]);
+        data_dim.push_back(image_output[1]);
         out[0]->receptive_field.resize(data_dim.size()-2);  fill_n(out[0]->receptive_field.begin(), data_dim.size()-2,1);
         out[0]->receptive_gap.resize(data_dim.size()-2);    fill_n(out[0]->receptive_gap.begin(),   data_dim.size()-2,1);
         out[0]->receptive_offset.resize(data_dim.size()-2); fill_n(out[0]->receptive_offset.begin(),data_dim.size()-2,0);
@@ -3977,9 +3984,9 @@ public:
         out[1]->need_diff = false;
         std::vector<int> label_dim;
         label_dim.push_back(batch_size);
-        label_dim.push_back(1);
-        label_dim.push_back(1);
-        label_dim.push_back(1);
+        label_dim.push_back(labelTensor->dim[1]);
+        label_dim.push_back(labelTensor->dim[2]);
+        label_dim.push_back(labelTensor->dim[3]);
         out[1]->receptive_field.resize(label_dim.size()-2);  fill_n(out[1]->receptive_field.begin(), label_dim.size()-2,1);
         out[1]->receptive_gap.resize(label_dim.size()-2);    fill_n(out[1]->receptive_gap.begin(),   label_dim.size()-2,1);
         out[1]->receptive_offset.resize(label_dim.size()-2); fill_n(out[1]->receptive_offset.begin(),label_dim.size()-2,0);
@@ -3989,7 +3996,6 @@ public:
 
         return memoryBytes;
     };
-
 
     void forward(Phase phase_){
         lock.wait();
