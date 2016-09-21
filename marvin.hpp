@@ -59,6 +59,10 @@
     #define ComputeT_MIN DBL_MIN
 #endif
 
+#if CUDA_VERSION >= 8000
+#define CUBLAS_DATA_HALF CUDA_R_16F
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Includes
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,6 +85,7 @@
 #include <thread>
 #include <chrono>
 #include <future>
+#include <cuda.h>
 #include <cublas_v2.h>
 #include <curand.h>
 #include <cudnn.h>
