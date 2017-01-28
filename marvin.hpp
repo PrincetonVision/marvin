@@ -3887,11 +3887,10 @@ public:
         labelTensor = new Tensor<StorageT>(file_label);
         labelTensor->print(veci(0));
 
+        ordering.resize(numofitems());
+        for (int i=0;i<numofitems();++i) ordering[i]=i;
         if (phase!=Testing){
             shuffle();
-        }else{
-            ordering.resize(numofitems());
-            for (int i=0;i<numofitems();++i) ordering[i]=i;
         }
     }
 
