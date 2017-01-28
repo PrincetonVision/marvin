@@ -4188,11 +4188,10 @@ class DiskDataLayer : public DataLayer {
             distribution_uniform[d] = new std::uniform_int_distribution<int>(0,size_data[d+1] - size_crop[d]);
         }
 
+        ordering.resize(numofitems());
+        for (int i=0;i<numofitems();++i) ordering[i]=i;
         if (phase!=Testing){
             shuffle();
-        }else{
-            ordering.resize(numofitems());
-            for (int i=0;i<numofitems();++i) ordering[i]=i;
         }
     };
 
