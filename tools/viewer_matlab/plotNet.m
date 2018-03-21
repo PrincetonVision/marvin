@@ -18,7 +18,7 @@ for i =1:length(net.layers)
     if isfield(net.layers{i},'out')
         out = net.layers{i}.out;
         for j =1:length(out)
-            nameofResponse(end+1) = out(j);
+            nameofResponse{end+1} = char(out(j));
         end
     end
 end
