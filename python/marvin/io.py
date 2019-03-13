@@ -75,7 +75,7 @@ def read_tensor(filename):
             if num_dims == 0:
                 break
             dims = np.fromstring(fp.read(4 * num_dims), dtype=np.int32)
-            num_bytes = np.prod(dims) * 4
+            num_bytes = np.prod(dims) * np.dtype(tensor_type).itemsize
             tensor.value = np.fromstring(
                 fp.read(num_bytes), dtype=tensor_type).reshape(dims)
             tensors.append(tensor)
@@ -97,7 +97,7 @@ def read_tensor_v0(filename):
             if num_dims == 0:
                 break
             dims = np.fromstring(fp.read(4 * num_dims), dtype=np.int32)
-            num_bytes = np.prod(dims) * 4
+            num_bytes = np.prod(dims) * np.dtype(tensor_type).itemsize
             tensor.value = np.fromstring(
                 fp.read(num_bytes), dtype=tensor_type).reshape(dims)
             tensors.append(tensor)
